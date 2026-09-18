@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editors
+.vscode/
+.idea/
+*.swp
+
+# Scratch output — keep generated records out of the public repo
+*.pdf
+*.csv
+!derivation/**/*.csv
+
+# Never publish raw lab data or manuscript sources from this repo
+/lab-data/
+/manuscript/
+*.xlsx
+*.xls

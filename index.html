@@ -1,0 +1,1386 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Mix design, compaction, calcimetry and degree-of-carbonation reduction for carbonation experiments on lime-treated soil. Runs entirely in the browser.">
+<title>Carbonation Bench Log</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+<style>
+:root{
+  color-scheme: light;
+  /* NC State: Wolfpack Red #CC0000, Hunt Yellow #FAC800, Wolfpack Black #000000.
+     Yellow never carries text on a light ground (1.6:1) — it is a fill, with
+     black on it (13.3:1). Red carries text at 5.9:1 on white. */
+  --ground:#F4F4F5; --surface:#FFFFFF; --well:#EDEDEF; --line:#D5D5D9; --line-soft:#E6E6E9;
+  --ink:#000000; --ink-2:#3A3A3E; --ink-3:#6E6E72;
+  --accent:#CC0000; --accent-ink:#990000; --accent-soft:#FBE9E9;
+  --yellow:#FAC800; --yellow-ink:#000000;
+  --hero:#CC0000;
+  --good:#5C6B14; --warn:#8A6A00; --crit:#990000;
+  --shadow:0 1px 2px rgba(0,0,0,.05), 0 4px 14px rgba(0,0,0,.05);
+  --mono:'IBM Plex Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  --sans:'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --cond:'IBM Plex Sans Condensed', 'IBM Plex Sans', system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme: dark;
+    --ground:#121213; --surface:#1A1A1B; --well:#232325; --line:#343437; --line-soft:#28282B;
+    --ink:#F2F2F3; --ink-2:#C3C3C6; --ink-3:#919195;
+    --accent:#FF4D4D; --accent-ink:#FF8080; --accent-soft:#2B1414;
+    --yellow:#FAC800; --yellow-ink:#000000;
+    --hero:#FF6B6B;
+    --good:#9DB33A; --warn:#FAC800; --crit:#FF6B6B;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 4px 14px rgba(0,0,0,.3);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --ground:#121213; --surface:#1A1A1B; --well:#232325; --line:#343437; --line-soft:#28282B;
+  --ink:#F2F2F3; --ink-2:#C3C3C6; --ink-3:#919195;
+  --accent:#FF4D4D; --accent-ink:#FF8080; --accent-soft:#2B1414;
+  --yellow:#FAC800; --yellow-ink:#000000;
+  --hero:#FF6B6B;
+  --good:#9DB33A; --warn:#FAC800; --crit:#FF6B6B;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 4px 14px rgba(0,0,0,.3);
+}
+
+*{box-sizing:border-box}
+/* Wolfpack bar: red with a Hunt Yellow tail */
+body::before{
+  content:""; display:block; height:4px;
+  background:linear-gradient(90deg, var(--accent) 0 74%, var(--yellow) 74% 100%);
+}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:var(--sans); font-size:14.5px; line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3{font-family:var(--cond); margin:0; text-wrap:balance; letter-spacing:.005em}
+
+/* ---------- shell ---------- */
+.shell{max-width:1220px; margin:0 auto; padding-inline:18px; padding-block:0 56px}
+
+header.top{
+  display:flex; flex-wrap:wrap; align-items:baseline; gap:10px 18px;
+  padding-block:22px 14px; border-bottom:1px solid var(--line);
+}
+header.top h1{font-size:23px; font-weight:700; letter-spacing:-.01em}
+header.top .sub{color:var(--ink-3); font-size:13px; flex:1 1 220px}
+.savestate{
+  font-family:var(--mono); font-size:11.5px; color:var(--ink-3);
+  display:flex; align-items:center; gap:7px; white-space:nowrap;
+}
+.savestate .dot{width:7px; height:7px; border-radius:50%; background:var(--ink-3)}
+button.theme{
+  font-family:var(--mono); font-size:11.5px; color:var(--ink-2);
+  background:var(--well); border:1px solid var(--line); border-radius:6px;
+  padding:4px 10px; cursor:pointer; white-space:nowrap;
+}
+button.theme:hover{border-color:var(--accent); color:var(--accent-ink)}
+.savestate.live .dot{background:var(--good)}
+.savestate.busy .dot{background:var(--warn)}
+
+/* ---------- specimen bar ---------- */
+.specbar{
+  display:flex; flex-wrap:wrap; gap:10px; align-items:center;
+  padding-block:13px; border-bottom:1px solid var(--line-soft);
+}
+.specbar label{font-size:11.5px; text-transform:uppercase; letter-spacing:.08em; color:var(--ink-3); font-weight:600}
+
+/* ---------- station rail ---------- */
+nav.rail{display:flex; flex-wrap:wrap; gap:6px; padding-block:16px 4px}
+nav.rail button{
+  display:flex; align-items:baseline; gap:8px;
+  font-family:var(--cond); font-size:14.5px; font-weight:600; color:var(--ink-2);
+  background:transparent; border:1px solid transparent; border-radius:7px;
+  padding:8px 13px; cursor:pointer; transition:background .13s, color .13s, border-color .13s;
+}
+nav.rail button .num{
+  font-family:var(--mono); font-size:11px; font-weight:600;
+  color:var(--ink-3); border:1px solid var(--line); border-radius:4px; padding:0 5px;
+}
+nav.rail button:hover{background:var(--well)}
+nav.rail button[aria-selected="true"]{background:var(--accent-soft); color:var(--accent-ink); border-color:var(--accent); box-shadow:inset 0 -3px 0 var(--yellow)}
+nav.rail button[aria-selected="true"] .num{color:var(--accent-ink); border-color:var(--accent)}
+
+/* ---------- panels ---------- */
+.panel{display:none}
+.panel.on{display:block}
+.panel > .lede{color:var(--ink-2); max-width:66ch; margin:14px 0 20px; font-size:14px}
+
+.cols{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:20px; align-items:start}
+.cols.wide-right{grid-template-columns:minmax(0,420px) minmax(0,1fr)}
+@media (max-width:880px){ .cols, .cols.wide-right{grid-template-columns:minmax(0,1fr)} }
+
+.block{background:var(--surface); border:1px solid var(--line); border-radius:11px; box-shadow:var(--shadow); overflow:hidden}
+.block + .block{margin-top:18px}
+.block > h3{
+  font-size:12px; text-transform:uppercase; letter-spacing:.09em; font-weight:700; color:var(--ink-3);
+  padding:13px 16px 0;
+}
+.block > .body{padding:13px 16px 16px; display:flex; flex-direction:column; gap:11px}
+
+/* ---------- fields ---------- */
+.field{display:grid; grid-template-columns:1fr auto; gap:4px 10px; align-items:center}
+.field label{font-size:13.5px; color:var(--ink-2)}
+.field .hint{grid-column:1/-1; font-size:11.5px; color:var(--ink-3); margin-top:-3px}
+.field .ctl{display:flex; align-items:center; gap:6px}
+input, select{
+  font-family:var(--mono); font-size:13.5px; color:var(--ink);
+  background:var(--well); border:1px solid var(--line); border-radius:6px;
+  padding:5px 8px; font-variant-numeric:tabular-nums;
+}
+input.num{width:100px; text-align:right}
+input.txt{width:150px; text-align:left}
+select{width:auto; text-align:left; padding-right:26px}
+input:focus-visible, select:focus-visible, button:focus-visible{
+  outline:2px solid var(--accent); outline-offset:1px;
+}
+input:invalid{border-color:var(--crit)}
+.unit{font-family:var(--mono); font-size:11.5px; color:var(--ink-3); min-width:34px}
+
+button.act{
+  font-family:var(--sans); font-size:13px; font-weight:600;
+  background:var(--accent); color:var(--surface); border:1px solid var(--accent);
+  border-radius:6px; padding:6px 13px; cursor:pointer;
+}
+button.act.ghost{background:transparent; color:var(--accent-ink); border-color:var(--line)}
+button.act:hover{filter:brightness(1.08)}
+button.act.ghost:hover{background:var(--accent-soft)}
+button.tiny{font-size:11.5px; padding:3px 8px}
+
+/* ---------- readouts ---------- */
+.readout{display:flex; flex-direction:column}
+.ro{
+  display:grid; grid-template-columns:1fr auto auto; gap:10px; align-items:baseline;
+  padding:6px 0; border-bottom:1px solid var(--line-soft);
+}
+.ro:last-child{border-bottom:none}
+.ro .k{font-size:13.5px; color:var(--ink-2)}
+.ro .k .tag{
+  font-family:var(--mono); font-size:10px; color:var(--ink-3);
+  border:1px solid var(--line); border-radius:3px; padding:0 4px; margin-left:6px; vertical-align:1px;
+}
+.ro .v{font-family:var(--mono); font-size:14px; font-weight:500; font-variant-numeric:tabular-nums}
+.ro .u{font-family:var(--mono); font-size:11.5px; color:var(--ink-3); min-width:42px; text-align:left}
+.ro.hero .v{font-size:21px; font-weight:600; color:var(--hero)}
+.ro.hero{padding:10px 0}
+
+.pill{
+  display:inline-flex; align-items:center; gap:5px;
+  font-family:var(--mono); font-size:11.5px; font-weight:500;
+  border-radius:999px; padding:2px 9px; border:1px solid currentColor;
+}
+.pill.good{color:var(--good)} .pill.warn{color:var(--warn)} .pill.crit{color:var(--crit)}
+.pill::before{content:""; width:6px; height:6px; border-radius:50%; background:currentColor}
+
+.note{font-size:12.5px; color:var(--ink-3); line-height:1.45}
+.note.flag{color:var(--crit)}
+
+/* ---------- tables ---------- */
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse; width:100%; min-width:520px}
+th, td{padding:6px 9px; text-align:right; border-bottom:1px solid var(--line-soft)}
+th{
+  font-family:var(--cond); font-size:11px; text-transform:uppercase; letter-spacing:.07em;
+  color:var(--ink-3); font-weight:700; white-space:nowrap; border-bottom:1px solid var(--line);
+}
+th:first-child, td:first-child{text-align:left}
+td{font-family:var(--mono); font-size:13px; font-variant-numeric:tabular-nums}
+td input.num{width:76px; padding:3px 6px}
+td.calc{color:var(--ink-2)}
+td.key{color:var(--hero); font-weight:600}
+tbody tr:hover{background:var(--well)}
+
+/* ---------- gauge ---------- */
+.gauge{height:9px; border-radius:5px; background:var(--well); overflow:hidden; border:1px solid var(--line)}
+.gauge > i{display:block; height:100%; background:var(--accent)}
+.gauge > i.over{background:var(--crit)}
+
+/* ---------- scale strip (lime/water) ---------- */
+.scale{position:relative; height:34px; margin-top:6px}
+.scale .track{position:absolute; inset:12px 0 auto 0; height:8px; border-radius:4px; background:var(--well); border:1px solid var(--line)}
+.scale .band{position:absolute; top:12px; height:8px; background:var(--accent-soft)}
+.scale .mk{position:absolute; top:6px; width:2px; height:20px; background:var(--hero)}
+.scale .lb{position:absolute; top:24px; font-family:var(--mono); font-size:10.5px; color:var(--ink-3); transform:translateX(-50%)}
+
+/* ---------- chart ---------- */
+.chartwrap{position:relative}
+svg.chart{display:block; width:100%; height:auto; max-width:100%}
+.tip{
+  position:absolute; pointer-events:none; opacity:0; transition:opacity .1s;
+  background:var(--surface); border:1px solid var(--line); border-radius:6px;
+  padding:5px 9px; font-family:var(--mono); font-size:11.5px; box-shadow:var(--shadow); white-space:nowrap;
+}
+.tip.on{opacity:1}
+
+footer{margin-top:34px; padding-top:16px; border-top:1px solid var(--line); color:var(--ink-3); font-size:12.5px}
+footer code{font-family:var(--mono); font-size:11.5px}
+@media (prefers-reduced-motion:reduce){*{transition:none !important; animation:none !important}}
+</style>
+<style>
+/* parity with the hosted-artifact skeleton */
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="shell">
+  <header class="top">
+    <h1>Carbonation Bench Log</h1>
+    <span class="sub">Mix design, compaction, calcimetry and degree-of-carbonation reduction, on the phase relations of <em>Phase_diagram_derivations.md</em>.</span>
+    <button class="theme" id="themeBtn" type="button" aria-live="polite">Theme</button>
+    <span class="savestate" id="savestate"><span class="dot"></span><span id="savetext">local only</span></span>
+  </header>
+
+  <div class="specbar">
+    <label for="specSel">Specimen</label>
+    <select id="specSel"></select>
+    <input type="text" class="txt" id="specNew" placeholder="new ID, e.g. 6.1" style="width:130px">
+    <button class="act ghost tiny" id="specAdd">Add</button>
+    <span class="note" id="specNote"></span>
+  </div>
+
+  <nav class="rail" role="tablist" id="rail"></nav>
+
+  <!-- ================= MATERIALS ================= -->
+  <section class="panel" id="p-mat" role="tabpanel">
+    <p class="lede">Batch constants shared by every specimen. These are the numbers the whole reduction rests on, so they are entered once per soil and lime batch rather than per test.</p>
+    <div class="cols">
+      <div>
+        <div class="block"><h3>Lime composition</h3><div class="body" id="f-lime"></div></div>
+        <div class="block"><h3>Soil</h3><div class="body" id="f-soil"></div></div>
+      </div>
+      <div>
+        <div class="block"><h3>Calcimeter vessel</h3><div class="body" id="f-vessel"></div></div>
+        <div class="block"><h3>Surface and solubility</h3><div class="body" id="f-surf"></div></div>
+        <div class="block"><h3>Derived</h3><div class="body"><div class="readout" id="ro-mat"></div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 1 MIX DESIGN ================= -->
+  <section class="panel" id="p-mix" role="tabpanel">
+    <p class="lede">Targets in, batch masses out. The lime is treated as a composite of portlandite, carbonate and inert rather than as a single mineral, so its effective specific gravity follows from the assay.</p>
+    <div class="cols wide-right">
+      <div>
+        <div class="block"><h3>Mould</h3><div class="body" id="f-mould"></div></div>
+        <div class="block"><h3>Targets</h3><div class="body" id="f-targets"></div></div>
+      </div>
+      <div>
+        <div class="block"><h3>Batch</h3><div class="body"><div class="readout" id="ro-batch"></div></div></div>
+        <div class="cols" style="gap:18px">
+          <div class="block" style="margin-top:0"><h3>Volumetric state</h3><div class="body"><div class="readout" id="ro-vol"></div></div></div>
+          <div class="block" style="margin-top:0"><h3>Lime and water</h3><div class="body">
+            <div class="readout" id="ro-lw"></div>
+            <div class="scale" id="sc-lw"></div>
+            <p class="note" id="n-lw"></p>
+          </div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 2 CALCIMETER ================= -->
+  <section class="panel" id="p-cal" role="tabpanel">
+    <p class="lede">The vessel constant is proportional to absolute temperature, so it is stored as a headspace volume and re-evaluated rather than carried as a fixed 60.7 kPa per gram.</p>
+    <div class="cols">
+      <div>
+        <div class="block"><h3>Calibrate the vessel</h3><div class="body">
+          <div id="f-calib"></div>
+          <div class="readout" id="ro-calib"></div>
+          <div><button class="act ghost tiny" id="useVessel">Save this headspace to Materials</button></div>
+        </div></div>
+        <div class="block"><h3>Read a digestion</h3><div class="body">
+          <div id="f-read"></div>
+          <div class="readout" id="ro-read"></div>
+        </div></div>
+      </div>
+      <div>
+        <div class="block"><h3>Size the sub-sample</h3><div class="body">
+          <div id="f-size"></div>
+          <div class="readout" id="ro-size"></div>
+          <div class="gauge"><i id="g-size"></i></div>
+          <p class="note" id="n-size"></p>
+        </div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 3 COMPACTION ================= -->
+  <section class="panel" id="p-cmp" role="tabpanel">
+    <p class="lede">Targets come from the mix design. Record what actually went into the mould and the as-built state follows, so a specimen that missed its target is known before it is carbonated rather than after.</p>
+    <div class="cols wide-right">
+      <div>
+        <div class="block"><h3>Placement</h3><div class="body" id="f-lifts"></div></div>
+        <div class="block"><h3>As built</h3><div class="body"><div class="readout" id="ro-built"></div></div></div>
+      </div>
+      <div class="block" style="margin-top:0"><h3>Lift record</h3><div class="body">
+        <div class="tablewrap"><table id="t-lifts"></table></div>
+        <p class="note">Target depth is measured from the top of the mould down to the compacted surface of each lift.</p>
+      </div></div>
+    </div>
+  </section>
+
+  <!-- ================= 4 POST-TEST ================= -->
+  <section class="panel" id="p-post" role="tabpanel">
+    <p class="lede">Enter the oven-dry mass and calcimeter pressure at each depth. New carbonate, degree of carbonation and binder content follow from P5; the weighings give a second, chemistry-free estimate that acts as a check on the first.</p>
+    <div class="cols wide-right">
+      <div>
+        <div class="block"><h3>Specimen record</h3><div class="body" id="f-post"></div></div>
+        <div class="block"><h3>Carbon dioxide</h3><div class="body"><div class="readout" id="ro-co2"></div></div></div>
+        <div class="block"><h3>Cross-check</h3><div class="body">
+          <div class="readout" id="ro-cross"></div>
+          <p class="note" id="n-cross"></p>
+        </div></div>
+      </div>
+      <div>
+        <div class="block" style="margin-top:0"><h3>Depth series</h3><div class="body">
+          <div class="tablewrap"><table id="t-post"></table></div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap">
+            <button class="act ghost tiny" id="addRow">Add depth</button>
+            <button class="act ghost tiny" id="expDoC">Export depth,DoC</button>
+            <button class="act ghost tiny" id="expFull">Export full sheet</button>
+            <button class="act tiny" id="expPdf">Report (PDF)</button>
+          </div>
+        </div></div>
+        <div class="block"><h3>Profile</h3><div class="body">
+          <div class="chartwrap" id="chartwrap"></div>
+          <div class="readout" id="ro-sum"></div>
+        </div></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Relations and section tags follow <code>Phase_diagram_derivations.md</code>; the spreadsheet discrepancies this replaces are listed in <code>Spreadsheet_audit.md</code>. Stoichiometry:
+    s<sub>p</sub>&nbsp;=&nbsp;0.740283, s<sub>c</sub>&nbsp;=&nbsp;0.439712, s<sub>v</sub>&nbsp;=&nbsp;0.179995, s<sub>g</sub>&nbsp;=&nbsp;0.259717.
+  </footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+/* =======================================================================
+   Constants — P3. Molar masses from IUPAC atomic masses so the reaction
+   balances exactly: 74.0920 + 44.0090 == 100.0860 + 18.0150.
+   ======================================================================= */
+const M_P = 74.0920, M_CO2 = 44.0090, M_C = 100.0860, M_H2O = 18.0150;
+const S_P = M_P / M_C, S_C = M_CO2 / M_C, S_V = M_H2O / M_C, S_G = 1 - S_P;
+const R_GAS = 8.31446, RHO_W = 1.0, R_LATM = 0.0820574;
+
+const DEFAULT_MAT = {
+  Gs: 2.65, Gp: 2.211, Gc: 2.711, Gi: 2.65,
+  chi_p: 0.87, chi_c: 0.10, chi_cs: 0.04,
+  Vhead: 0.404, Tcal: 295, Pcap: 100, target_fs: 0.75,
+  Sl: 15000, Ss: 113, Csat: 20, deltaMin: 2
+};
+
+const DEFAULT_SPEC = () => ({
+  example: true,
+  mould: { dia: 7.92, ht: 20.3 },
+  targets: { e: 0.90, Sr: 0.30, beta_l: 0.03, mode: "Sr", lwTarget: 0.30 },
+  cal: { mKnown: 1.0, dPKnown: 8.0, dPRead: 14.0, Tread: 295, betaCt: 0.08, mdPlan: 3.0 },
+  cmp: { nLifts: 5, lifts: [] },
+  post: {
+    co2L: 12.5, dry0: null, dryF: null, wet0: null, wetF: null,
+    rows: [
+      { z: 1.27, md: 3.0, dP: 14.0 },
+      { z: 5.08, md: 3.0, dP: 14.0 },
+      { z: 8.89, md: 3.0, dP: 13.2 },
+      { z: 12.70, md: 3.0, dP: 11.4 }
+    ]
+  }
+});
+
+/* =======================================================================
+   Relations — mirrors verify_spreadsheets.py
+   ======================================================================= */
+const chiI = m => 1 - m.chi_p - m.chi_c;
+const GsEff = m => 1 / ((1 - m.chi_cs) / m.Gs + m.chi_cs / m.Gc);
+const GlEff = m => 1 / (m.chi_p / m.Gp + m.chi_c / m.Gc + Math.max(chiI(m), 0) / m.Gi);
+const Lambda = (m, b) => (m.chi_cs + m.chi_c * b) / (1 + b);
+
+function mixDesign(m, Vt, e, Sr, b) {                                   // P2.2
+  const Vs = Vt / (1 + e);
+  const ms = RHO_W * Vs / (1 / GsEff(m) + b / GlEff(m));
+  const ml = b * ms, Vv = Vt - Vs, Vw = Sr * Vv, mw = RHO_W * Vw;
+  return {
+    Vt, Vs, Vv, Vw, Vg: Vv - Vw, ms, ml, mw,
+    w: mw / ms, wTotal: mw / (ms + ml), wet: ms + ml + mw,
+    theta_l: (ml / (GlEff(m) * RHO_W)) / Vt, theta_w: Vw / Vt, theta_g: (Vv - Vw) / Vt,
+    n: Vv / Vt
+  };
+}
+const mbFromCarbonate = (m, b, md, mct) => {                            // P5.2
+  const L = Lambda(m, b);
+  return (mct - L * md) / (1 - S_G * L);
+};
+const docOf = (m, b, md, mb) => S_P * (1 + b) * mb / (m.chi_p * b * (md - S_G * mb));
+const betaBOf = (b, md, mb) => (1 + b) * mb / (md - S_G * mb);
+const mbFromDryMass = (dF, d0) => (dF - d0) / S_G;                      // P6.1
+
+function postState(m, Vt, e0, b, betaB) {                               // P4.2
+  const Vs0 = Vt / (1 + e0);
+  const ms = RHO_W * Vs0 / (1 / GsEff(m) + b / GlEff(m));
+  const per = (1 - m.chi_cs) / m.Gs
+            + (m.chi_cs + m.chi_c * b + betaB) / m.Gc
+            + (m.chi_p * b - S_P * betaB) / m.Gp
+            + Math.max(chiI(m), 0) * b / m.Gi;
+  const Vsf = ms * per / RHO_W;
+  return { ms, Vsf, ef: Vt / Vsf - 1, theta_b: (betaB * ms / (m.Gc * RHO_W)) / Vt };
+}
+const calK = (Vh, T) => R_GAS * T / (Vh * M_C);                         // P7.1
+const co2Required = (m, ml) => (M_CO2 / M_P) * m.chi_p * ml;            // P8.1
+const molesStdL = L => 1.0 * L / (R_LATM * 273.15);
+const filmDelta = (w, b, Sl, Ss) => w / (1000 * (Sl * b + Ss)) * 1e9;   // nm, P9.2
+const turnovers = (m, b, w) => (1000 / (M_P * 1e-3 * m.Csat)) * (m.chi_p * b / w); // P9.4
+
+/* =======================================================================
+   State
+   ======================================================================= */
+let MAT = { ...DEFAULT_MAT };
+let SPECS = { "4.1 (example)": DEFAULT_SPEC() };
+let CUR = "4.1 (example)";
+let DB = null, DOWN = null;
+const S = () => SPECS[CUR];
+
+/* =======================================================================
+   Small helpers
+   ======================================================================= */
+const $ = s => document.querySelector(s);
+const el = (t, c, txt) => { const n = document.createElement(t); if (c) n.className = c; if (txt != null) n.textContent = txt; return n; };
+const fin = v => Number.isFinite(v);
+
+/* The box being typed in right now: {id, raw}. Every keystroke re-renders, which
+   rebuilds the inputs — without carrying the raw text, a half-typed "0." is parsed
+   to 0 and written back, so a decimal point can never be entered. */
+let EDITING = null;
+/* Accept either decimal separator: a comma is what most non-US keyboards produce. */
+const parseNum = t => {
+  const v = parseFloat(String(t).replace(",", ".").trim());
+  return Number.isNaN(v) ? null : v;
+};
+function numInput(id, value, onNum, aria) {
+  const inp = el("input", "num");
+  inp.type = "text"; inp.inputMode = "decimal"; inp.autocomplete = "off"; inp.id = id;
+  inp.value = (EDITING && EDITING.id === id) ? EDITING.raw : (value ?? "");
+  if (aria) inp.setAttribute("aria-label", aria);
+  inp.addEventListener("input", () => {
+    EDITING = { id, raw: inp.value };
+    onNum(inp.value.trim() === "" ? null : parseNum(inp.value));
+    renderAll(); queueSave();
+  });
+  return inp;
+}
+function fmt(v, d = 2) {
+  if (!fin(v)) return "—";
+  if (v !== 0 && Math.abs(v) < 1e-3) return v.toExponential(1);
+  return v.toLocaleString(undefined, { minimumFractionDigits: d, maximumFractionDigits: d });
+}
+
+function field(host, { key, label, unit, step = "any", hint, min, get, set }) {
+  const f = el("div", "field");
+  const id = "in-" + key.replace(/[^\w]/g, "-");
+  const lb = el("label", null, label); lb.htmlFor = id;
+  const ctl = el("div", "ctl");
+  const inp = numInput(id, get(), set);
+  ctl.append(inp, el("span", "unit", unit || ""));
+  f.append(lb, ctl);
+  if (hint) f.append(el("div", "hint", hint));
+  host.append(f);
+  return inp;
+}
+
+function ro(host, k, v, u, opts = {}) {
+  const r = el("div", "ro" + (opts.hero ? " hero" : ""));
+  const kk = el("div", "k"); kk.append(document.createTextNode(k));
+  if (opts.tag) kk.append(el("span", "tag", opts.tag));
+  const vv = el("div", "v");
+  if (opts.pill) { const p = el("span", "pill " + opts.pill, v); vv.append(p); }
+  else vv.textContent = v;
+  r.append(kk, vv, el("div", "u", u || ""));
+  host.append(r);
+}
+
+/* =======================================================================
+   Persistence
+   ======================================================================= */
+let saveTimer = null;
+/* Store document ids accept only [A-Za-z0-9_-.~:@+]; a specimen name like
+   "4.1 (example)" has to be slugged or the write is rejected outright. The
+   readable name travels in the document body, not the id. */
+const slug = s => (String(s).replace(/[^A-Za-z0-9_\-.~:@+]+/g, "-")
+                            .replace(/^-+|-+$/g, "").slice(0, 180)) || "spec";
+function setSave(cls, txt) { const n = $("#savestate"); n.className = "savestate " + cls; $("#savetext").textContent = txt; }
+const LS_KEY = "carbonation-bench-log";
+
+function saveLocal() {
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify({ MAT, SPECS, CUR }));
+    setSave("live", "saved in this browser");
+  } catch (e) {
+    setSave("", "not saved: browser storage blocked");
+  }
+}
+
+function loadLocal() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return false;
+    const o = JSON.parse(raw);
+    if (o.MAT) MAT = { ...DEFAULT_MAT, ...o.MAT };
+    if (o.SPECS && Object.keys(o.SPECS).length) {
+      SPECS = o.SPECS;
+      CUR = o.CUR && SPECS[o.CUR] ? o.CUR : Object.keys(SPECS)[0];
+    }
+    return true;
+  } catch { return false; }
+}
+
+function queueSave() {
+  setSave("busy", "saving…");
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    if (!DB) { saveLocal(); return; }
+    try {
+      await DB.doc("config/materials").set({ ...MAT });
+      await DB.doc("specimens/" + slug(CUR)).set({ name: CUR, body: JSON.stringify(S()) });
+      setSave("live", "saved · shared");
+    } catch (e) {
+      const code = e && (e.code || e.name) ? (e.code || e.name) : "error";
+      setSave("", "not saved: " + code);
+      console.error("save failed", e);
+    }
+  }, 700);
+}
+
+async function boot() {
+  try { DB = await window.claude?.use?.("db"); } catch { DB = null; }
+  try { DOWN = await window.claude?.use?.("downloads"); } catch { DOWN = null; }
+  if (!DB) {
+    // Standalone (GitHub Pages, a local file): keep records in this browser.
+    const had = loadLocal();
+    setSave(had ? "live" : "", had ? "saved in this browser" : "saves in this browser");
+    renderSpecSel(); renderAll();
+    return;
+  }
+  setSave("live", "shared · saves automatically");
+  try {
+    const m = await DB.doc("config/materials").get();
+    if (m.exists) MAT = { ...DEFAULT_MAT, ...m.data() };
+  } catch {}
+  try {
+    DB.collection("specimens").onSnapshot(snap => {
+      const seen = {};
+      snap.docs.forEach(d => {
+        const b = d.data();
+        try { seen[b.name] = JSON.parse(b.body); } catch {}
+      });
+      if (Object.keys(seen).length) {
+        const keepExample = SPECS[CUR] && SPECS[CUR].example && !seen[CUR];
+        SPECS = keepExample ? { ...seen, [CUR]: SPECS[CUR] } : seen;
+        if (!SPECS[CUR]) CUR = Object.keys(SPECS)[0];
+      }
+      renderSpecSel(); renderAll();
+    }, () => {});
+  } catch {}
+  renderSpecSel(); renderAll();
+}
+
+/* =======================================================================
+   Rail
+   ======================================================================= */
+const TABS = [
+  { id: "mat", label: "Materials", num: null },
+  { id: "mix", label: "Mix design", num: "1" },
+  { id: "cmp", label: "Compaction", num: "2" },
+  { id: "cal", label: "Calcimetry", num: "3" },
+  { id: "post", label: "Reduction", num: "4" }
+];
+let TAB = "mix";
+function renderRail() {
+  const r = $("#rail"); r.textContent = "";
+  TABS.forEach(t => {
+    const b = el("button"); b.setAttribute("role", "tab");
+    b.setAttribute("aria-selected", String(TAB === t.id));
+    if (t.num) b.append(el("span", "num", t.num));
+    b.append(document.createTextNode(t.label));
+    b.onclick = () => { TAB = t.id; renderRail(); };
+    r.append(b);
+  });
+  TABS.forEach(t => $("#p-" + t.id).classList.toggle("on", TAB === t.id));
+}
+
+/* =======================================================================
+   Specimen selector
+   ======================================================================= */
+function renderSpecSel() {
+  const sel = $("#specSel"); sel.textContent = "";
+  Object.keys(SPECS).forEach(k => {
+    const o = el("option", null, k); o.value = k; if (k === CUR) o.selected = true; sel.append(o);
+  });
+  sel.onchange = () => { CUR = sel.value; renderAll(); };
+  $("#specNote").textContent = S().example ? "Example data — overwrite freely." : "";
+}
+$("#specAdd").onclick = () => {
+  const name = $("#specNew").value.trim();
+  if (!name || SPECS[name]) return;
+  const base = JSON.parse(JSON.stringify(S()));
+  base.example = false;
+  base.post.rows = base.post.rows.map(r => ({ z: r.z, md: null, dP: null }));
+  SPECS[name] = base; CUR = name; $("#specNew").value = "";
+  renderSpecSel(); renderAll(); queueSave();
+};
+
+/* =======================================================================
+   MATERIALS
+   ======================================================================= */
+function renderMaterials() {
+  const mk = (host, defs) => { host.textContent = ""; defs.forEach(d => field(host, d)); };
+  const M = k => ({ get: () => MAT[k], set: v => MAT[k] = v });
+
+  mk($("#f-lime"), [
+    { key: "chi_p", label: "Portlandite fraction χp", unit: "–", step: "0.01", ...M("chi_p"), hint: "From the available-lime assay, not by difference." },
+    { key: "chi_c", label: "Carbonate fraction χc", unit: "–", step: "0.01", ...M("chi_c"), hint: "Measured on the dry lime by the same calcimeter." },
+    { key: "Gp", label: "Gp portlandite", unit: "–", step: "0.001", ...M("Gp") },
+    { key: "Gc", label: "Gc calcite", unit: "–", step: "0.001", ...M("Gc") },
+    { key: "Gi", label: "Gi lime inert", unit: "–", step: "0.01", ...M("Gi") }
+  ]);
+  mk($("#f-soil"), [
+    { key: "chi_cs", label: "Native carbonate χcs", unit: "–", step: "0.005", ...M("chi_cs"), hint: "Dominates the uncertainty in new carbonate — measure with replicates." },
+    { key: "Gs", label: "Gs soil minerals", unit: "–", step: "0.01", ...M("Gs") }
+  ]);
+  mk($("#f-vessel"), [
+    { key: "Vhead", label: "Headspace volume Vh", unit: "L", step: "0.001", ...M("Vhead") },
+    { key: "Tcal", label: "Vessel temperature", unit: "K", step: "0.5", ...M("Tcal") },
+    { key: "Pcap", label: "Gauge full scale", unit: "kPa", step: "5", ...M("Pcap") },
+    { key: "target_fs", label: "Target fraction of full scale", unit: "–", step: "0.05", ...M("target_fs") }
+  ]);
+  mk($("#f-surf"), [
+    { key: "Sl", label: "Lime specific surface Sl", unit: "m²/kg", step: "500", ...M("Sl") },
+    { key: "Ss", label: "Soil specific surface Ss", unit: "m²/kg", step: "5", ...M("Ss") },
+    { key: "deltaMin", label: "Minimum film δmin", unit: "nm", step: "0.5", ...M("deltaMin") },
+    { key: "Csat", label: "Portlandite solubility Csat", unit: "mol/m³", step: "1", ...M("Csat") }
+  ]);
+
+  const h = $("#ro-mat"); h.textContent = "";
+  const ci = chiI(MAT);
+  ro(h, "Inert fraction χi, by difference", fmt(ci, 4), "–");
+  ro(h, "Effective soil gravity", fmt(GsEff(MAT), 4), "–", { tag: "P2.1" });
+  ro(h, "Effective lime gravity", fmt(GlEff(MAT), 4), "–", { tag: "P2.1" });
+  ro(h, "Calcimeter constant k", fmt(calK(MAT.Vhead, MAT.Tcal), 2), "kPa/g", { tag: "P7.1" });
+  if (ci < 0) {
+    const p = el("p", "note flag");
+    p.textContent = "χp + χc = " + fmt(MAT.chi_p + MAT.chi_c, 4) + " exceeds 1, leaving no room for inert impurity. The assay and the carbonate reading cannot both be right — reconcile them before any degree of carbonation is reported.";
+    h.append(p);
+  }
+}
+
+/* =======================================================================
+   1 MIX DESIGN
+   ======================================================================= */
+function mixNow() {
+  const s = S(), t = s.targets;
+  const Vt = Math.PI * Math.pow(s.mould.dia, 2) / 4 * s.mould.ht;
+  let Sr = t.Sr;
+  if (t.mode === "lw") {
+    // target beta_l / w  ->  w  ->  S_r
+    const w = t.beta_l / t.lwTarget;
+    const probe = mixDesign(MAT, Vt, t.e, 1, t.beta_l);
+    Sr = w * probe.ms / (RHO_W * probe.Vv);
+  }
+  return { Vt, Sr, mix: mixDesign(MAT, Vt, t.e, Sr, t.beta_l) };
+}
+
+function renderMix() {
+  const s = S(), t = s.targets;
+  const T = k => ({ get: () => t[k], set: v => t[k] = v });
+
+  const hm = $("#f-mould"); hm.textContent = "";
+  field(hm, { key: "dia", label: "Inside diameter", unit: "cm", step: "0.01", get: () => s.mould.dia, set: v => s.mould.dia = v });
+  field(hm, { key: "ht", label: "Inside height", unit: "cm", step: "0.1", get: () => s.mould.ht, set: v => s.mould.ht = v });
+
+  const ht = $("#f-targets"); ht.textContent = "";
+  const modeF = el("div", "field");
+  const ml = el("label", null, "Water set by"); ml.htmlFor = "in-mode";
+  const sel = el("select"); sel.id = "in-mode";
+  [["Sr", "degree of saturation"], ["lw", "lime-to-water ratio"]].forEach(([v, lab]) => {
+    const o = el("option", null, lab); o.value = v; if (t.mode === v) o.selected = true; sel.append(o);
+  });
+  sel.onchange = () => { t.mode = sel.value; renderAll(); queueSave(); };
+  const ctl = el("div", "ctl"); ctl.append(sel);
+  modeF.append(ml, ctl); ht.append(modeF);
+
+  field(ht, { key: "e", label: "Void ratio e", unit: "–", step: "0.01", ...T("e") });
+  field(ht, { key: "beta_l", label: "Lime content βl", unit: "–", step: "0.005", ...T("beta_l"), hint: "Dry lime over dry soil, as batched." });
+  if (t.mode === "Sr") field(ht, { key: "Sr", label: "Saturation Sr", unit: "–", step: "0.05", ...T("Sr") });
+  else field(ht, { key: "lwTarget", label: "Target βl / w", unit: "–", step: "0.05", ...T("lwTarget") });
+
+  const { Vt, Sr, mix } = mixNow();
+
+  const hb = $("#ro-batch"); hb.textContent = "";
+  ro(hb, "Dry soil", fmt(mix.ms, 1), "g", { hero: true, tag: "P2.2" });
+  ro(hb, "Hydrated lime", fmt(mix.ml, 2), "g");
+  ro(hb, "Water", fmt(mix.mw, 1), "g");
+  ro(hb, "Total to place", fmt(mix.wet, 1), "g");
+  ro(hb, "Water content w, on dry soil", fmt(mix.w, 4), "–");
+  ro(hb, "…on total dry mass", fmt(mix.wTotal, 4), "–", { tag: "P11.1" });
+
+  const hv = $("#ro-vol"); hv.textContent = "";
+  ro(hv, "Mould volume", fmt(Vt, 1), "cm³");
+  ro(hv, "Solid volume", fmt(mix.Vs, 1), "cm³");
+  ro(hv, "Void volume", fmt(mix.Vv, 1), "cm³");
+  ro(hv, "Porosity n", fmt(mix.n, 3), "–");
+  ro(hv, "Saturation Sr", fmt(Sr, 3), "–");
+  ro(hv, "θw / θg", fmt(mix.theta_w, 3) + " / " + fmt(mix.theta_g, 3), "–");
+  ro(hv, "θl", fmt(mix.theta_l, 4), "–");
+
+  const lw = t.beta_l / mix.w, lwEff = MAT.chi_p * t.beta_l / mix.w;
+  const delta = filmDelta(mix.w, t.beta_l, MAT.Sl, MAT.Ss);
+  const N = turnovers(MAT, t.beta_l, mix.w);
+  const hl = $("#ro-lw"); hl.textContent = "";
+  ro(hl, "Lime to water, βl / w", fmt(lw, 3), "–", { tag: "P9.1" });
+  ro(hl, "Effective, χp βl / w", fmt(lwEff, 3), "–");
+  ro(hl, "Volumetric, θl / θw", fmt(mix.theta_l / mix.theta_w, 3), "–");
+  ro(hl, "Water film δw", fmt(delta, 0), "nm", { tag: "P9.2" });
+  ro(hl, "Dissolution turnovers N", fmt(N, 0), "–", { tag: "P9.4" });
+
+  // scale strip: film thickness against the wetting threshold
+  const sc = $("#sc-lw"); sc.textContent = "";
+  const track = el("div", "track"); sc.append(track);
+  const lo = Math.log10(Math.max(MAT.deltaMin, .1)), hi = Math.log10(1000);
+  const pos = v => Math.max(0, Math.min(100, (Math.log10(Math.max(v, .1)) - lo) / (hi - lo) * 100));
+  const band = el("div", "band"); band.style.left = "0%"; band.style.width = pos(MAT.deltaMin) + "%"; sc.append(band);
+  const mk = el("div", "mk"); mk.style.left = pos(delta) + "%"; sc.append(mk);
+  [[MAT.deltaMin, "δmin"], [delta, fmt(delta, 0) + " nm"]].forEach(([v, lab], i) => {
+    const l = el("div", "lb", lab); l.style.left = pos(v) + "%"; if (i === 0) l.style.color = "var(--ink-3)"; sc.append(l);
+  });
+
+  const wet = delta >= MAT.deltaMin;
+  $("#n-lw").textContent = wet
+    ? "The film clears δmin by a factor of " + fmt(delta / MAT.deltaMin, 0) + ", so every lime grain is continuously wetted and the wetting threshold does not bind. What varies across the matrix is N: the pore water must saturate and be stripped " + fmt(N, 0) + " times to pass all the reactive lime through solution, and fractional conversion in a fixed test falls as that number rises."
+    : "The film is thinner than δmin, so part of the lime is in contact only with soil grains and cannot react by the aqueous route. Raise the saturation or lower the lime content.";
+}
+
+/* =======================================================================
+   2 CALCIMETRY
+   ======================================================================= */
+function renderCal() {
+  const c = S().cal;
+  const C = k => ({ get: () => c[k], set: v => c[k] = v });
+
+  const h1 = $("#f-calib"); h1.textContent = "";
+  field(h1, { key: "mKnown", label: "Reagent CaCO₃ mass", unit: "g", step: "0.01", ...C("mKnown") });
+  field(h1, { key: "dPKnown", label: "Pressure rise", unit: "kPa", step: "0.1", ...C("dPKnown") });
+
+  const kFit = fin(c.mKnown) && c.mKnown > 0 ? c.dPKnown / c.mKnown : NaN;
+  const VhFit = fin(kFit) && kFit > 0 ? R_GAS * MAT.Tcal / (kFit * M_C) : NaN;
+  const r1 = $("#ro-calib"); r1.textContent = "";
+  ro(r1, "Fitted constant k", fmt(kFit, 2), "kPa/g", { tag: "P7.1" });
+  ro(r1, "Implied headspace", fmt(VhFit, 4), "L");
+  ro(r1, "Stored headspace", fmt(MAT.Vhead, 4), "L");
+  $("#useVessel").onclick = () => { if (fin(VhFit)) { MAT.Vhead = +VhFit.toFixed(4); renderAll(); queueSave(); } };
+
+  const h2 = $("#f-read"); h2.textContent = "";
+  field(h2, { key: "dPRead", label: "Pressure rise", unit: "kPa", step: "0.1", ...C("dPRead") });
+  field(h2, { key: "Tread", label: "Temperature", unit: "K", step: "0.5", ...C("Tread") });
+  const kNow = calK(MAT.Vhead, c.Tread);
+  const r2 = $("#ro-read"); r2.textContent = "";
+  ro(r2, "Constant at this temperature", fmt(kNow, 2), "kPa/g");
+  ro(r2, "Total carbonate", fmt(c.dPRead / kNow, 4), "g", { hero: true });
+
+  const h3 = $("#f-size"); h3.textContent = "";
+  field(h3, { key: "betaCt", label: "Expected total carbonate", unit: "–", step: "0.005", ...C("betaCt"), hint: "Λ plus the binder content you expect, not the untreated soil's carbonate." });
+  field(h3, { key: "mdPlan", label: "Planned sub-sample", unit: "g", step: "0.1", ...C("mdPlan") });
+  const mMax = MAT.target_fs * MAT.Pcap / (kNow * c.betaCt);
+  const dPExp = kNow * c.betaCt * c.mdPlan;
+  const frac = dPExp / MAT.Pcap;
+  const r3 = $("#ro-size"); r3.textContent = "";
+  ro(r3, "Largest safe sub-sample", fmt(mMax, 2), "g", { tag: "P7.2" });
+  ro(r3, "Expected rise for the planned mass", fmt(dPExp, 1), "kPa", { hero: true });
+  ro(r3, "Fraction of full scale", fmt(frac * 100, 0) + "%", "");
+  const g = $("#g-size");
+  g.style.width = Math.min(100, frac * 100) + "%";
+  g.className = frac > 1 ? "over" : "";
+  $("#n-size").textContent = frac > 1
+    ? "Over range. Reduce the sub-sample to " + fmt(mMax, 2) + " g or less."
+    : frac < 0.25
+      ? "Low on the gauge, where resolution is worst. A sub-sample nearer " + fmt(mMax, 2) + " g would read more precisely, at the cost of averaging over a greater depth interval."
+      : "Comfortably on scale.";
+}
+
+/* =======================================================================
+   3 COMPACTION
+   ======================================================================= */
+function renderCmp() {
+  const s = S(), c = s.cmp;
+  const { Vt, mix } = mixNow();
+  const n = Math.max(1, Math.round(c.nLifts || 1));
+  while (c.lifts.length < n) c.lifts.push({ m: null, z: null });
+  c.lifts.length = n;
+
+  const hf = $("#f-lifts"); hf.textContent = "";
+  field(hf, { key: "nLifts", label: "Number of lifts", unit: "–", step: "1", min: "1", get: () => c.nLifts, set: v => c.nLifts = v });
+
+  const tgtMass = mix.wet / n, H = s.mould.ht;
+  const t = $("#t-lifts"); t.textContent = "";
+  const thead = el("thead"), hr = el("tr");
+  ["Lift", "Target mass", "Placed", "Target depth", "Measured", "Δ mass"].forEach(x => hr.append(el("th", null, x)));
+  thead.append(hr); t.append(thead);
+  const tb = el("tbody");
+  c.lifts.forEach((L, i) => {
+    const tr = el("tr");
+    tr.append(el("td", null, String(i + 1)));
+    tr.append(el("td", "calc", fmt(tgtMass, 1)));
+    const tdM = el("td");
+    tdM.append(numInput("lift-m-" + i, L.m, v => L.m = v, "Mass placed, lift " + (i + 1)));
+    tr.append(tdM);
+    const zt = H - (i + 1) * H / n;
+    tr.append(el("td", "calc", fmt(zt, 2)));
+    const tdZ = el("td");
+    tdZ.append(numInput("lift-z-" + i, L.z, v => L.z = v, "Measured depth, lift " + (i + 1)));
+    tr.append(tdZ);
+    tr.append(el("td", "calc", fin(L.m) ? fmt(L.m - tgtMass, 1) : "—"));
+    tb.append(tr);
+  });
+  t.append(tb);
+
+  // as-built state from what was actually placed
+  const placed = c.lifts.reduce((a, L) => a + (fin(L.m) ? L.m : 0), 0);
+  const anyPlaced = c.lifts.some(L => fin(L.m));
+  const b = s.targets.beta_l;
+  const wUsed = mix.w;
+  const dryTot = placed / (1 + wUsed / (1 + b));          // w is on soil; total dry = wet /(1 + m_w/m_dry)
+  const msA = dryTot / (1 + b), mwA = placed - dryTot;
+  const VsA = msA / RHO_W * (1 / GsEff(MAT) + b / GlEff(MAT));
+  const eA = Vt / VsA - 1, VvA = Vt - VsA, SrA = (mwA / RHO_W) / VvA;
+
+  const r = $("#ro-built"); r.textContent = "";
+  if (!anyPlaced) {
+    ro(r, "Mass placed", "—", "g");
+    r.append(el("p", "note", "Enter the mass of at least one lift and the as-built state appears here."));
+  } else {
+    ro(r, "Mass placed", fmt(placed, 1), "g");
+    ro(r, "Against target", fmt(placed - mix.wet, 1), "g");
+    ro(r, "Void ratio e", fmt(eA, 3), "–", { hero: true });
+    ro(r, "Target e", fmt(s.targets.e, 3), "–");
+    ro(r, "Saturation Sr", fmt(SrA, 3), "–");
+    ro(r, "Dry density", fmt(dryTot / Vt, 3), "g/cm³");
+    ro(r, "θw", fmt((mwA / RHO_W) / Vt, 3), "–");
+    const dev = Math.abs(eA - s.targets.e);
+    ro(r, "Deviation", dev < 0.02 ? "on target" : dev < 0.05 ? "within 0.05" : "off target",
+       "", { pill: dev < 0.02 ? "good" : dev < 0.05 ? "warn" : "crit" });
+  }
+}
+
+/* =======================================================================
+   4 REDUCTION
+   ======================================================================= */
+function reduceRows() {
+  const s = S(), b = s.targets.beta_l, T = s.cal.Tread;
+  const k = calK(MAT.Vhead, T);
+  return s.post.rows.map(r => {
+    const out = { ...r };
+    if (fin(r.dP) && fin(r.md) && r.md > 0) {
+      out.mct = r.dP / k;
+      out.mb = mbFromCarbonate(MAT, b, r.md, out.mct);
+      out.doc = docOf(MAT, b, r.md, out.mb);
+      out.betaB = betaBOf(b, r.md, out.mb);
+    }
+    return out;
+  });
+}
+
+function renderPost() {
+  const s = S(), p = s.post, b = s.targets.beta_l;
+  const P = k => ({ get: () => p[k], set: v => p[k] = v });
+
+  const hf = $("#f-post"); hf.textContent = "";
+  field(hf, { key: "co2L", label: "CO₂ introduced", unit: "std L", step: "0.1", ...P("co2L"), hint: "Flowmeter total at 0 °C and 1 atm." });
+  field(hf, { key: "dry0", label: "Dry mass before", unit: "g", step: "0.01", ...P("dry0"), hint: "Optional. With the mass after, gives a second estimate of the binder." });
+  field(hf, { key: "dryF", label: "Dry mass after", unit: "g", step: "0.01", ...P("dryF") });
+  field(hf, { key: "wet0", label: "Wet mass before", unit: "g", step: "0.01", ...P("wet0") });
+  field(hf, { key: "wetF", label: "Wet mass after", unit: "g", step: "0.01", ...P("wetF") });
+
+  const rows = reduceRows();
+
+  const t = $("#t-post"); t.textContent = "";
+  const thead = el("thead"), hr = el("tr");
+  ["Depth cm", "Dry mass g", "ΔP kPa", "Total CaCO₃ g", "New CaCO₃ g", "DoC", "βb", ""].forEach(x => hr.append(el("th", null, x)));
+  thead.append(hr); t.append(thead);
+  const tb = el("tbody");
+  rows.forEach((r, i) => {
+    const tr = el("tr");
+    [["z", "depth"], ["md", "dry mass"], ["dP", "pressure rise"]].forEach(([key, aria]) => {
+      const td = el("td");
+      td.append(numInput("post-" + key + "-" + i, p.rows[i][key],
+        v => p.rows[i][key] = v, aria + " at row " + (i + 1)));
+      tr.append(td);
+    });
+    tr.append(el("td", "calc", fmt(r.mct, 4)));
+    tr.append(el("td", "calc", fmt(r.mb, 4)));
+    tr.append(el("td", "key", fmt(r.doc, 3)));
+    tr.append(el("td", "calc", fmt(r.betaB, 4)));
+    const tdX = el("td"), bx = el("button", "act ghost tiny", "×");
+    bx.setAttribute("aria-label", "Remove depth " + (i + 1));
+    bx.onclick = () => { p.rows.splice(i, 1); renderAll(); queueSave(); };
+    tdX.append(bx); tr.append(tdX);
+    tb.append(tr);
+  });
+  t.append(tb);
+  $("#addRow").onclick = () => { p.rows.push({ z: null, md: 3.0, dP: null }); renderAll(); queueSave(); };
+
+  // ---- CO2 accounting
+  const { Vt, mix } = mixNow();
+  const req = co2Required(MAT, mix.ml);
+  const introduced = M_CO2 * molesStdL(p.co2L);
+  const good = rows.filter(r => fin(r.mb));
+  const mbSpec = good.length ? good.reduce((a, r) => a + r.betaB, 0) / good.length * mix.ms : NaN;
+  const consumed = fin(mbSpec) ? S_C * mbSpec : NaN;
+
+  const rc = $("#ro-co2"); rc.textContent = "";
+  ro(rc, "Required for all reactive lime", fmt(req, 2), "g", { tag: "P8.1" });
+  ro(rc, "Introduced", fmt(introduced, 2), "g");
+  ro(rc, "Supply ratio R", fmt(introduced / req, 3), "–", { tag: "P8.2" });
+  ro(rc, "Utilisation η", fmt(consumed / introduced, 3), "–");
+  if (fin(consumed / introduced) && consumed / introduced > 1) {
+    rc.append(el("p", "note flag", "Utilisation above 1 is impossible — more carbonate was measured than the gas delivered could account for. Check the flowmeter total and χcs."));
+  }
+
+  // ---- gravimetric cross-check
+  const rx = $("#ro-cross"); rx.textContent = "";
+  const mbGrav = fin(p.dry0) && fin(p.dryF) ? mbFromDryMass(p.dryF, p.dry0) : NaN;
+  ro(rx, "Binder from carbonate", fmt(mbSpec, 2), "g", { tag: "P5.2" });
+  ro(rx, "Binder from weighings", fmt(mbGrav, 2), "g", { tag: "P6.1" });
+  if (fin(mbGrav) && fin(mbSpec)) {
+    const d = mbGrav / mbSpec - 1;
+    ro(rx, "Difference", fmt(d * 100, 1) + "%", "", { pill: Math.abs(d) < 0.1 ? "good" : Math.abs(d) < 0.25 ? "warn" : "crit" });
+    $("#n-cross").textContent = d < -0.1
+      ? "The weighings fall short of the calcimeter. That points to material lost in handling, or to a χcs set too low."
+      : d > 0.1
+        ? "The weighings exceed the calcimeter. That points to a χcs set too high, so too much carbonate is being credited to the soil."
+        : "The two routes agree. They fail in different ways — one depends on the composition constants, the other on nothing leaving the specimen — so agreement is real evidence.";
+  } else {
+    $("#n-cross").textContent = "Enter the dry mass before and after the test for a second estimate of the binder that uses no chemistry and no assumed composition.";
+  }
+  if (fin(p.wet0) && fin(p.wetF) && fin(mbSpec)) {
+    const dw = (p.wetF - p.wet0) - S_G * mbSpec;
+    ro(rx, "Water gained during test", fmt(dw, 2), "g", { tag: "P6.3" });
+  }
+
+  // ---- summary
+  const rs = $("#ro-sum"); rs.textContent = "";
+  if (good.length) {
+    const meanDoC = good.reduce((a, r) => a + r.doc, 0) / good.length;
+    const meanBeta = good.reduce((a, r) => a + r.betaB, 0) / good.length;
+    const ps = postState(MAT, Vt, s.targets.e, b, meanBeta);
+    ro(rs, "Mean degree of carbonation", fmt(meanDoC, 3), "–", { hero: true, tag: "P4.3" });
+    ro(rs, "Binder content βb", fmt(meanBeta, 4), "–");
+    ro(rs, "Volumetric binder θb", fmt(ps.theta_b, 4), "–", { tag: "P4.2" });
+    ro(rs, "Void ratio after", fmt(ps.ef, 3), "–");
+    ro(rs, "…from", fmt(s.targets.e, 3), "–");
+    if (meanDoC > 1.02) rs.append(el("p", "note flag", "A degree of carbonation above 1 means the specimen was fully carbonated and the excess is measurement error — or that χcs is too low or χp too high. Check the composition before reporting."));
+  } else {
+    ro(rs, "Mean degree of carbonation", "—", "–");
+  }
+
+  renderChart(rows);
+}
+
+/* ---- DoC vs depth. One series, so no legend: the title names it. ---- */
+function renderChart(rows) {
+  const pts = rows.filter(r => fin(r.doc) && fin(r.z)).sort((a, b) => a.z - b.z);
+  const host = $("#chartwrap"); host.textContent = "";
+  const W = 460, H = 300, mL = 46, mR = 22, mT = 26, mB = 40;
+  const zMax = Math.max(S().mould.ht, ...pts.map(p => p.z), 1);
+  const xMax = Math.max(1.2, ...pts.map(p => p.doc)) ;
+  const X = v => mL + (v / xMax) * (W - mL - mR);
+  const Y = v => mT + (v / zMax) * (H - mT - mB);
+
+  const NS = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(NS, "svg");
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`); svg.setAttribute("class", "chart");
+  svg.setAttribute("role", "img");
+  svg.setAttribute("aria-label", "Degree of carbonation against depth");
+  const add = (tag, attrs, txt) => {
+    const n = document.createElementNS(NS, tag);
+    for (const k in attrs) n.setAttribute(k, attrs[k]);
+    if (txt != null) n.textContent = txt;
+    svg.append(n); return n;
+  };
+  const ink3 = "var(--ink-3)", line = "var(--line-soft)";
+
+  add("text", { x: mL, y: 14, fill: "var(--ink-2)", "font-size": "11.5", "font-family": "var(--cond)", "letter-spacing": ".06em" }, "DEGREE OF CARBONATION vs DEPTH");
+
+  // grid + x ticks
+  for (let v = 0; v <= xMax + 1e-9; v += 0.2) {
+    add("line", { x1: X(v), y1: mT, x2: X(v), y2: H - mB, stroke: line, "stroke-width": 1 });
+    add("text", { x: X(v), y: H - mB + 15, fill: ink3, "font-size": "10.5", "font-family": "var(--mono)", "text-anchor": "middle" }, v.toFixed(1));
+  }
+  // y ticks
+  const zStep = zMax <= 12 ? 2 : 5;
+  for (let v = 0; v <= zMax + 1e-9; v += zStep) {
+    add("line", { x1: mL, y1: Y(v), x2: W - mR, y2: Y(v), stroke: line, "stroke-width": 1 });
+    add("text", { x: mL - 7, y: Y(v) + 3.5, fill: ink3, "font-size": "10.5", "font-family": "var(--mono)", "text-anchor": "end" }, String(v));
+  }
+  add("text", { x: (mL + W - mR) / 2, y: H - 6, fill: ink3, "font-size": "10.5", "font-family": "var(--mono)", "text-anchor": "middle" }, "DoC  [–]");
+  add("text", { x: 12, y: (mT + H - mB) / 2, fill: ink3, "font-size": "10.5", "font-family": "var(--mono)", "text-anchor": "middle", transform: `rotate(-90 12 ${(mT + H - mB) / 2})` }, "depth  [cm]");
+
+  // full-conversion reference
+  add("line", { x1: X(1), y1: mT, x2: X(1), y2: H - mB, stroke: ink3, "stroke-width": 1, "stroke-dasharray": "4 3" });
+  add("text", { x: X(1) + 4, y: mT + 10, fill: ink3, "font-size": "10", "font-family": "var(--mono)" }, "DoC = 1");
+
+  // axes
+  add("line", { x1: mL, y1: mT, x2: mL, y2: H - mB, stroke: "var(--line)", "stroke-width": 1 });
+  add("line", { x1: mL, y1: H - mB, x2: W - mR, y2: H - mB, stroke: "var(--line)", "stroke-width": 1 });
+
+  if (!pts.length) {
+    add("text", { x: (mL + W - mR) / 2, y: (mT + H - mB) / 2, fill: ink3, "font-size": "12", "font-family": "var(--sans)", "text-anchor": "middle" }, "Enter depths and pressures to plot the profile");
+    host.append(svg); return;
+  }
+
+  add("path", {
+    d: pts.map((p, i) => (i ? "L" : "M") + X(p.doc) + " " + Y(p.z)).join(" "),
+    fill: "none", stroke: "var(--accent)", "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round"
+  });
+
+  const tip = el("div", "tip"); host.append(svg); host.append(tip);
+  pts.forEach(p => {
+    add("circle", { cx: X(p.doc), cy: Y(p.z), r: 4.5, fill: "var(--accent)", stroke: "var(--surface)", "stroke-width": 2 });
+    const hit = add("circle", { cx: X(p.doc), cy: Y(p.z), r: 13, fill: "transparent" });
+    hit.addEventListener("pointerenter", () => {
+      tip.textContent = `${p.z} cm · DoC ${p.doc.toFixed(3)} · βb ${p.betaB.toFixed(4)}`;
+      tip.classList.add("on");
+      const bb = host.getBoundingClientRect();
+      tip.style.left = Math.min(bb.width - 150, X(p.doc) / W * bb.width + 10) + "px";
+      tip.style.top = (Y(p.z) / H * bb.height - 30) + "px";
+    });
+    hit.addEventListener("pointerleave", () => tip.classList.remove("on"));
+  });
+}
+
+/* =======================================================================
+   Export
+   ======================================================================= */
+/* Inside a claude.ai Artifact the viewer sandbox blocks <a download>, so the
+   downloads capability is the only route. Hosted anywhere else that capability
+   does not exist and the ordinary blob download works, so try each in turn. */
+async function save(filename, data) {
+  if (DOWN) {
+    try { await DOWN.save({ filename, data }); } catch (e) { /* viewer declined */ }
+    return;
+  }
+  try {
+    const blob = data instanceof Blob
+      ? data
+      : new Blob([data], { type: filename.endsWith(".csv") ? "text/csv;charset=utf-8" : "application/octet-stream" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = filename; a.style.display = "none";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  } catch (e) {
+    alert("This browser blocked the download.");
+  }
+}
+$("#expDoC").onclick = () => {
+  const rows = reduceRows().filter(r => fin(r.doc) && fin(r.z)).sort((a, b) => a.z - b.z);
+  const csv = "depth,DoC\n" + rows.map(r => (r.z / 100).toFixed(3) + "," + r.doc.toFixed(3)).join("\n") + "\n";
+  save("DoC_" + slug(CUR) + ".csv", csv);
+};
+$("#expPdf").onclick = () => {
+  const d = buildPdf();
+  if (d) save("record_" + slug(CUR) + "_" + new Date().toISOString().slice(0, 10) + ".pdf", d.output("blob"));
+};
+$("#expFull").onclick = () => {
+  const rows = reduceRows();
+  const head = "depth_cm,dry_mass_g,dP_kPa,total_CaCO3_g,new_CaCO3_g,DoC,beta_b\n";
+  const csv = head + rows.map(r => [r.z, r.md, r.dP, r.mct, r.mb, r.doc, r.betaB]
+    .map(v => fin(v) ? (+v).toFixed(5) : "").join(",")).join("\n") + "\n";
+  save("reduction_" + slug(CUR) + "_" + new Date().toISOString().slice(0, 10) + ".csv", csv);
+};
+
+/* =======================================================================
+   PDF report — jsPDF UMD from cdnjs.
+
+   jsPDF's built-in Helvetica is WinAnsi-encoded and carries no Greek, and
+   its Symbol font draws blank under that encoding, so the report embeds a
+   subset of DejaVu Sans (regular + bold, ASCII + Greek + a few maths signs)
+   and writes real Unicode. Markup: _{..} subscript, ^{..} superscript,
+   braces nest. Everything else is literal, so "beta_{l}" is written as the
+   character itself.
+   ======================================================================= */
+const FONT_REG = "AAEAAAAMAIAAAwBATUFUSIOw34sAADXMAAACoE9TLzJq3BFwAAAxyAAAAFZjbWFwXWuiBwAAMiAAAAGsZ2FzcAAHAAcAADXAAAAADGdseWZej+QFAAAAzAAALLZoZWFkCF3ChgAALugAAAA2aGhlYQ2fCA4AADGkAAAAJGhtdHgU3mUfAAAvIAAAAoRsb2Nhj+WbZgAALaQAAAFEbWF4cADhA8EAAC2EAAAAIG5hbWUn7T28AAAzzAAAAdRwb3N0/4EAWgAANaAAAAAgAAIBNQAAAgAF1QADAAkAACUzFSMRMxEDIwMBNcvLyxSiFf7+BdX9cf6bAWUAAgDFA6oC6QXVAAMABwAAAREjESERIxEBb6oCJKoF1f3VAiv91QIrAAIAngAABhcFvgADAB8AAAEhAyELASETMwMhFSEDIRUhAyMTIQMjEyE1IRMhNSETBBf+3VQBJURoASRpoGcBOP6hUgE+/ptooGf+22ehaP7FAWBU/r4BaWYDhf6yA4f+YQGf/mGa/rKZ/mIBnv5iAZ6ZAU6aAZ8AAAMAqv7TBG0GFAAhACgALwAAASMDLgEnNR4BFxEuATU0Njc1MxUeARcVLgEnER4BFRQGBwMRDgEVFBYXET4BNTQmArRkAWnSambRb93J2sxkXa5TU69c49bj1mR0enHhf4F7/tMBLQItLbRAQQEByCSslqO8DuvoBB8bryouBP5VI7ScqcMPAwABmg1qWFZg1f5PEW5aWGgABQBx/+MHKQXwAAsAFwAjACcAMwAAASIGFRQWMzI2NTQmJzIWFRQGIyImNTQ2ASIGFRQWMzI2NTQmJTMBIxMyFhUUBiMiJjU0NgXRV2NjV1VjY1WeurudoLq7/JdWY2JXV2NkAzGg/FqgH568u5+fuboCkZSEgpWVgoOVf9y7u9vbu7zbAmGVgoSUlISBln/58wYN27u92tu8utwAAgCB/+MF/gXwAAkAMAAAAQ4BFRQWMzI2NwkBPgE3MwYCBwEjJw4BIyIANTQ2Ny4BNTQ2MzIWFxUuASMiBhUUFgHyW1XUoF+mSf57Afw7Qga6DGhdARf8j2jkg/H+zoaGMDLeuFOlVVeeRGmDOwMjUaFYksI/QAKP/fhZy3KE/v5+/uOTWVcBE9eA4WM/fTyixSQkti8xb1gzZwAAAQDFA6oBbwXVAAMAAAERIxEBb6oF1f3VAisAAAEAsP7yAnsGEgANAAABBgIVFBIXIyYCNTQSNwJ7hoKDhaCWlZSXBhLm/j7n5/475esBxuDfAcTsAAABAKT+8gJvBhIADQAAEzMWEhUUAgcjNhI1NAKkoJaVlZaghYODBhLs/jzf4P466+UBxefnAcIAAAEAPQJKA8MF8AARAAABDQEHJREjEQUnLQE3BREzESUDw/6ZAWc6/rBy/rA6AWf+mToBUHIBUATfwsNiy/6HAXnLYsPCY8sBef6HywABANkAAAXbBQQACwAAAREhFSERIxEhNSERA64CLf3TqP3TAi0FBP3Tqv3TAi2qAi0AAAEAnv8SAcMA/gAFAAA3MxUDIxPw06SBUv6s/sABQAAAAQBkAd8CfwKDAAMAABMhFSFkAhv95QKDpAABANsAAAGuAP4AAwAANzMVI9vT0/7+AAABAAD/QgKyBdUAAwAAATMBIwIIqv34qgXV+W0AAgCH/+MEjwXwAAsAFwAAASICERASMzISERACJzIAERAAIyIAERAAAoucnZ2cnZ2dnfsBCf73+/v+9wEJBVD+zf7M/s3+zQEzATMBNAEzoP5z/ob+h/5zAY0BeQF6AY0AAQDhAAAEWgXVAAoAADchEQU1JTMRIRUh/gFK/pkBZcoBSvykqgRzSLhI+tWqAAEAlgAABEoF8AAcAAAlIRUhNTYANz4BNTQmIyIGBzU+ATMyBBUUBgcGAAGJAsH8THMBjTNhTaeGX9N4etRY6AEURVsZ/vSqqqp3AZE6bZdJd5ZCQ8wxMujCXKVwHf7rAAEAnP/jBHMF8AAoAAABHgEVFAQhIiYnNR4BMzI2NTQmKwE1MzI2NTQmIyIGBzU+ATMyBBUUBgM/kaP+0P7oXsdqVMhtvse5pa62lZ6jmFO+cnPJWeYBDI4DJR/EkN3yJSXDMTKWj4SVpndwc3skJrQgINGyfKsAAAIAZAAABKQF1QACAA0AAAkBIQMzETMVIxEjESE1Awb+AgH+Nf7V1cn9XgUl/OMDzfwzqP6gAWDDAAABAJ7/4wRkBdUAHQAAEyEVIRE+ATMyABUUACEiJic1HgEzMjY1NCYjIgYH3QMZ/aAsWCz6AST+1P7vXsNoWsBrrcrKrVGhVAXVqv6SDw/+7urx/vUgIMsxMLacnLYkJgACAI//4wSWBfAACwAkAAABIgYVFBYzMjY1NCYBFS4BIyICAz4BMzIAFRQAIyAAERAAITIWAqSIn5+IiJ+fAQlMm0zI0w87smvhAQX+8OL+/f7uAVABG0ybAzu6oqG7u6GiugJ5uCQm/vL+71dd/u/r5v7qAY0BeQFiAaUeAAABAKgAAARoBdUABgAAEyEVASMBIagDwP3i0wH+/TMF1Vb6gQUrAAMAi//jBIsF8AALACMALwAAASIGFRQWMzI2NTQmJS4BNTQkMzIWFRQGBx4BFRQEIyIkNTQ2ExQWMzI2NTQmIyIGAouQpaWQkKal/qWCkQD/3t/+kYGSo/739/f+96RIkYOCk5OCg5ECxZqHh5qbhoeaViCygLPQ0LOAsiAixo/Z6OjZj8YBYXSCgnR0goIAAAIAgf/jBIcF8AAYACQAADc1HgEzMhITDgEjIgA1NAAzIAAREAAhIiYBMjY1NCYjIgYVFBbhTJxLyNMPOrJs4P77ARDiAQMBEf6x/uVMnAE+iJ+fiIifnx+4JCYBDQESVlwBD+vmARb+c/6G/p/+Wx4Cl7qiobu7oaK6AAACAPAAAAHDBCMAAwAHAAA3MxUjETMVI/DT09PT/v4EI/4AAgCe/xIBwwQjAAMACQAAEzMVIxEzFQMjE/DT09OkgVIEI/792az+wAFAAAABANkAXgXbBKYABgAACQIVATUBBdv7+AQI+v4FAgPw/pH+k7YB0aYB0QACANkBYAXbA6IAAwAHAAATIRUhFSEVIdkFAvr+BQL6/gOiqPCqAAEA2QBeBdsEpgAGAAATNQEVATUB2QUC+v4EBgPwtv4vpv4vtgFtAAACAJMAAAOwBfAAAwAkAAAlMxUjEyM1NDY/AT4BNTQmIyIGBzU+ATMyFhUUBg8BDgEHDgEVAYfLy8W/OFpaOTODbE+zYV7BZ7jfSFpYLycIBgb+/gGRmmWCVlk1XjFZbkZDvDk4wp9MiVZWLzUZFTw0AAACAIf+nAdxBaIACwBMAAABFBYzMjY1NCYjIgYBDgEjIiY1NDYzMhYXNTMRPgE1NCYnJiQjIgYHBgIVFBIXFgQzMjY3FwYEIyIkJyYCNTQSNzYkMzIEFx4BFRAABQL6jnx7jZB6eY8CITybZ6zX2KtnnDuPkqU/QGj+1bB74mCdsXNtaQEUnYH5aFp9/tmYuf64gICGiH6BAVK91AFre0tP/sL+6AIZj6OkjoylpP5ITUn5yMj6S0yD/SAW37FrvFCDi0FAZv61wZ/+6mpobVdRb2Fng319AUm9tgFKfX+HrqBi5nv++f7QBgACABAAAAVoBdUAAgAKAAAJASEBMwEjAyEDIwK8/u4CJf575QI50oj9X4jVBQ79GQOu+isBf/6BAAMAyQAABOwF1QAIABEAIAAAAREhMjY1NCYjAREhMjY1NCYjJSEyFhUUBgceARUUBCMhAZMBRKOdnaP+vAErlJGRlP4LAgTn+oB8laX+8Pv96ALJ/d2Hi4yFAmb+Pm9ycXCmwLGJohQgy5jI2gAAAQBz/+MFJwXwABkAAAEVLgEjIAAREAAhMjY3FQ4BIyAAERAAITIWBSdm54L/AP7wARABAILnZmrthP6t/noBhgFThu0FYtVfXv7H/tj+2f7HXl/TSEgBnwFnAWgBn0cAAgDJAAAFsAXVAAgAEQAAAREzIAAREAAhJSEgABEQACkBAZP0ATUBH/7h/sv+QgGfAbIBlv5o/lD+YQUv+3cBGAEuASwBF6b+l/6A/n7+lgABAMkAAASLBdUACwAAEyEVIREhFSERIRUhyQOw/RoCx/05Avj8PgXVqv5Gqv3jqgABAMkAAAQjBdUACQAAEyEVIREhFSERI8kDWv1wAlD9sMoF1ar+SKr9NwABAHP/4wWLBfAAHQAAJREhNSERBgQjIAAREAAhMgQXFS4BIyAAERAAITI2BMP+tgISdf7moP6i/nUBiwFekgEHb3D8i/7u/u0BEwESa6jVAZGm/X9TVQGZAW0BbgGZSEbXX2D+zv7R/tL+ziUAAAEAyQAABTsF1QALAAATMxEhETMRIxEhESPJygLeysr9IsoF1f2cAmT6KwLH/TkAAAEAyQAAAZMF1QADAAATMxEjycrKBdX6KwAAAf+W/mYBkwXVAAsAABMzERAGKwE1MzI2NcnKzeNNP4ZuBdX6k/7y9KqWwgABAMkAAAVqBdUACgAAEzMRASEJASEBESPJygKeAQT9GwMa/vb9M8oF1f2JAnf9SPzjAs/9MQABAMkAAARqBdUABQAAEzMRIRUhycoC1/xfBdX61aoAAAEAyQAABh8F1QAMAAATIQkBIREjEQEjAREjyQEtAX0BfwEtxf5/y/5/xAXV/AgD+PorBR/8AAQA+uEAAAEAyQAABTMF1QAJAAATIQERMxEhAREjyQEQApbE/vD9asQF1fsfBOH6KwTh+x8AAAIAc//jBdkF8AALABcAAAEiABEQADMyABEQACcgABEQACEgABEQAAMn3P79AQPc3AEB/v/cAToBeP6I/sb+xf6HAXkFTP64/uX+5v64AUgBGgEbAUik/lv+nv6f/lsBpAFiAWIBpQAAAgDJAAAEjQXVAAgAEwAAAREzMjY1NCYjJSEyBBUUBCsBESMBk/6NmpqN/jgByPsBAf7/+/7KBS/9z5KHhpKm49vd4v2oAAIAc/74BdkF8AALAB0AAAEiABEQADMyABEQABMBIycOASMgABEQACEgABEQAgMn3P79AQPc3AEB/v8/AQr03SEjEP7F/ocBeQE7AToBeNEFTP64/uX+5v64AUgBGgEbAUj6z/7d7wICAaUBYQFiAaX+W/6e/vz+jgAAAgDJAAAFVAXVABMAHAAAAR4BFxMjAy4BKwERIxEhIBYVFAYBETMyNjU0JiMDjUF7Ps3Zv0qLeNzKAcgBAPyD/Yn+kpWVkgK8FpB+/mgBf5Zi/YkF1dbYjboCT/3uh4ODhQABAIf/4wSiBfAAJwAAARUuASMiBhUUFh8BHgEVFAQhIiYnNR4BMzI2NTQmLwEuATU0JDMyFgRIc8xfpbN3pnri1/7d/udq74B77HKtvIeae+LKARf1adoFpMU3NoB2Y2UfGSvZttngMC/QRUaIfm58HxgtwKvG5CYAAAH/+gAABOkF1QAHAAADIRUhESMRIQYE7/3uy/3uBdWq+tUFKwAAAQCy/+MFKQXVABEAABMzERQWMzI2NREzERAAISAAEbLLrsPCrsv+3/7m/uX+3wXV/HXw09PwA4v8XP7c/tYBKgEkAAABABAAAAVoBdUABgAAIQEzCQEzAQJK/cbTAdkB2tL9xwXV+xcE6forAAABAEQAAAemBdUADAAAEzMJATMJATMBIwkBI0TMAToBOeMBOgE5zf6J/v7F/sL+BdX7EgTu+xIE7vorBRD68AAAAQA9AAAFOwXVAAsAABMzCQEzCQEjCQEjAYHZAXMBddn+IAIA2f5c/lnaAhUF1f3VAiv9M/z4Anv9hQMdAAAB//wAAATnBdUACAAAAzMJATMBESMRBNkBngGb2f3wywXV/ZoCZvzy/TkCxwAAAQBcAAAFHwXVAAkAABMhFQEhFSE1ASFzBJX8UAPH+z0DsPxnBdWa+2+qmgSRAAEAsP7yAlgGFAAHAAATIRUjETMVIbABqPDw/lgGFI/5/I8AAAEAAP9CArIF1QADAAATASMBqgIIqv34BdX5bQaTAAEAx/7yAm8GFAAHAAABESE1MxEjNQJv/ljv7wYU+N6PBgSPAAEA2QOoBdsF1QAGAAAJASMJASMBA7wCH8n+SP5IyQIfBdX90wGL/nUCLQAAAf/s/h0EFP6sAAMAAAEVITUEFPvY/qyPjwABAKoE8AKJBmYAAwAACQEjAQFvARqZ/roGZv6KAXYAAAIAe//jBC0EewAKACUAAAEiBhUUFjMyNj0BNxEjNQ4BIyImNTQ2MyE1NCYjIgYHNT4BMzIWAr7frIFvmbm4uD+8iKzL/fsBAqeXYLZUZb5a8/ACM2Z7YnPZtClM/YGqZmHBor3AEn+LLi6qJyf8AAACALr/4wSkBhQACwAcAAABNCYjIgYVFBYzMjYBPgEzMgAREAIjIiYnFSMRMwPlp5KSp6eSkqf9jjqxe8wA///Me7E6ubkCL8vn58vL5+cCUmRh/rz++P74/rxhZKgGFAABAHH/4wPnBHsAGQAAARUuASMiBhUUFjMyNjcVDgEjIgAREAAhMhYD506dULPGxrNQnU5NpV39/tYBLQEGVaIENawrK+PNzeMrK6okJAE+AQ4BEgE6IwAAAgBx/+MEWgYUABAAHAAAAREzESM1DgEjIgIREAAzMhYBFBYzMjY1NCYjIgYDori4OrF8y/8A/8t8sf3Hp5KSqKiSkqcDtgJe+eyoZGEBRAEIAQgBRGH+Fcvn58vL5+cAAgBx/+MEfwR7ABQAGwAAARUhHgEzMjY3FQ4BIyAAERAAMzIABy4BIyIGBwR//LIMzbdqx2Jj0Gv+9P7HASn84gEHuAKliJq5DgJeWr7HNDSuKiwBOAEKARMBQ/7dxJe0rp4AAAEALwAAAvgGFAATAAABFSMiBh0BIRUhESMRIzUzNTQ2MwL4sGNNAS/+0bmwsK69BhSZUGhjj/wvA9GPTrurAAACAHH+VgRaBHsACwAoAAABNCYjIgYVFBYzMjYXEAIhIiYnNR4BMzI2PQEOASMiAhEQEjMyFhc1MwOipZWUpaWUlaW4/v76YaxRUZ5StbQ5snzO/PzOfLI5uAI9yNzcyMfc3Ov+4v7pHR6zLCq9v1tjYgE6AQMBBAE6YmOqAAABALoAAARkBhQAEwAAAREjETQmIyIGFREjETMRPgEzMhYEZLh8fJWsublCs3XBxgKk/VwCnp+evqT9hwYU/Z5lZO8AAAIAwQAAAXkGFAADAAcAABMzESMRMxUjwbi4uLgEYPugBhTpAAL/2/5WAXkGFAALAA8AABMzERQGKwE1MzI2NREzFSPBuKO1RjFpTLi4BGD7jNbAnGGZBijpAAEAugAABJwGFAAKAAATMxEBMwkBIwERI7q5AiXr/a4Ca/D9x7kGFPxpAeP99P2sAiP93QABAMEAAAF5BhQAAwAAEzMRI8G4uAYU+ewAAAEAugAABx0EewAiAAABPgEzMhYVESMRNCYjIgYVESMRNCYjIgYVESMRMxU+ATMyFgQpRcCCr765cnWPprlyd42mubk/sHl6qwOJfHb14v1cAp6hnL6k/YcCnqKbv6P9hwRgrmdifAAAAQC6AAAEZAR7ABMAAAERIxE0JiMiBhURIxEzFT4BMzIWBGS4fHyVrLm5QrN1wcYCpP1cAp6fnr6k/YcEYK5lZO8AAgBx/+MEdQR7AAsAFwAAASIGFRQWMzI2NTQmJzIAERAAIyIAERAAAnOUrKuVk6ysk/ABEv7u8PH+7wERA9/nycnn6MjH6Zz+yP7s/u3+xwE5ARMBFAE4AAIAuv5WBKQEewAQABwAACURIxEzFT4BMzIAERACIyImATQmIyIGFRQWMzI2AXO5uTqxe8wA///Me7ECOKeSkqenkpKnqP2uBgqqZGH+vP74/vj+vGEB68vn58vL5+cAAAIAcf5WBFoEewALABwAAAEUFjMyNjU0JiMiBgEOASMiAhEQADMyFhc1MxEjAS+nkpKoqJKSpwJzOrF8y/8A/8t8sTq4uAIvy+fny8vn5/2uZGEBRAEIAQgBRGFkqvn2AAEAugAAA0oEewARAAABLgEjIgYVESMRMxU+ATMyFhcDSh9JLJynubk6uoUTLhwDtBIRy779sgRgrmZjBQUAAQBv/+MDxwR7ACcAAAEVLgEjIgYVFBYfAR4BFRQGIyImJzUeATMyNjU0Ji8BLgE1NDYzMhYDi06oWomJYpQ/xKX32FrDbGbGYYKMZatAq5jgzma0BD+uKChUVEBJIQ4qmYmctiMjvjU1WVFLUCUPJJWCnqweAAEANwAAAvIFngATAAABESEVIREUFjsBFSMiJjURIzUzEQF3AXv+hUtzvb3VooeHBZ7+wo/9oIlOmp/SAmCPAT4AAAIArv/jBFgEewATABQAABMRMxEUFjMyNjURMxEjNQ4BIyImAa64fHyVrbi4Q7F1wcgBzwG6Aqb9YZ+fvqQCe/ugrGZj8AOoAAEAPQAABH8EYAAGAAATMwkBMwEjPcMBXgFew/5c+gRg/FQDrPugAAABAFYAAAY1BGAADAAAEzMbATMbATMBIwsBI1a45uXZ5uW4/tvZ8fLZBGD8lgNq/JYDavugA5b8agAAAQA7AAAEeQRgAAsAAAkCIwkBIwkBMwkBBGT+awGq2f66/rrZAbP+ctkBKQEpBGD93/3BAbj+SAJKAhb+cQGPAAEAPf5WBH8EYAAPAAAFDgErATUzMjY/AQEzCQEzApNOlHyTbExUMyH+O8MBXgFew2jIeppIhlQETvyUA2wAAQBYAAAD2wRgAAkAABMhFQEhFSE1ASFxA2r9TAK0/H0CtP1lBGCo/NuTqAMlAAEBAP6yBBcGFAAkAAAFFSMiJj0BNCYrATUzMjY9ATQ2OwEVIyIGHQEUBgceAR0BFBYzBBc++alsjj09j2up+T5EjVZbbm9aVo2+kJTd75d0j3OV8N2Tj1iN+J2OGRuOnPiNWAABAQT+HQGuBh0AAwAAAREjEQGuqgYd+AAIAAAAAQEA/rIEFwYUACQAAAUzMjY9ATQ2Ny4BPQE0JisBNTMyFh0BFBY7ARUjIgYdARQGKwEBAEaMVVpvb1pVjEY/+adsjj4+jmyn+T++Vo/4nI4bGY6d+I5Xj5Pd8JVzj3SX792UAAEA2QHTBdsDMQAdAAABFQ4BIyInJicmJyYjIgYHNT4BMzIXFhcWFxYzMjYF22mzYW6SCwUHD5teWKxiabNhbpMKBQgOm15WqQMxsk9EOwQCAwU+TVOyT0U8BAIDBT5MAAIAngCNBCUEIwAGAA0AAAEVCQEVATUTFQkBFQE1BCX+0wEt/isj/tMBLf4rBCO//vT+9L8BolIBor/+9P70vwGiUgAAAgDDA3UDPQXwAAsAGgAAASIGFRQWMzI2NTQmJzIWFx4BFRQGIyImNTQ2AgBQbm5QUG5vT0B2Ky4uuYaHtLgFb29QT21tT09wgTEuLXJChLe0h4a6AAABAF4CnAK0BfAAGAAAASEVITU2NwA1NCYjIgYHNT4BMzIWFRQBBgEMAaj9qiI/AVhoVTR6SE2FOZGu/rU4Aw5ybh84ATFeQlEjI3scHIRsi/7kMAABAGICjQLNBfAAKAAAAR4BFRQGIyImJzUeATMyNjU0JisBNTMyNjU0JiMiBgc1PgEzMhYVFAYCDFxlvrE5fUY0d0NteG9sVl5eYWRfKGZRSYA3kKlaBGASbVJ8hhUUeRsaT0ZKTGw/PDo9EhdzERJ2Y0VgAAEArv5WBOUEYAAgAAATETMRFBYzMjY1ETMRFBYzMjY3FQ4BIyImJw4BIyImJxGuuIqHlJW4IyUJIBwpSSNFUg8ykWJmjyr+VgYK/UiRlKioAo38ojw5CwyUFxZOUE9PTk791wABANsCSAGuA0YAAwAAEzMVI9vT0wNG/gACAMEAjQRIBCMABgANAAATARUBNQkBJQEVATUJAcEB1f4rAS3+0wGyAdX+KwEt/tMEI/5eUv5evwEMAQy//l5S/l6/AQwBDAABARkAPwWcBMUACwAACQIHCQEnCQE3CQEFnP43Acl3/jX+NXYByP44dgHLAcsETP41/jd5Acv+NXkByQHLef41AcsAAAIAEAAABWgF1QACAAYAAAkBIQUBMwECvP5mAzX7uQI65QI5BQ77mqgF1forAAADAHP/4wXZBfAAAwASACEAAAEhFSEBIgcGERAAMzI3NhEQJyYnIAAREAcGISAnJhEQNzYBxQLC/T4BYtyBggED3NyBgICB3AE6AXi8vP7G/sW8vb28A3CqAoakpP7l/ub+uKSkARoBG6SkpP5b/p7+n9LT0tIBYgFi09IAAQAQAAAFaAXVAAYAADMjATMBIwHl1QI65QI50v4mBdX6KwUOAAABAMkAAASLBdUACwAAJSEVITUJATUhFSEBAbEC2vw+Ad/+IQOw/TgB36qqqgJwAhGqqv3zAAADAHMAAAXZBdUACAARACcAAAEGBwYVFBcWFzM2NzY1NCcmJwMmJyYREDc2NzUzFRYXFhEQBwYHFSMCwpZigoJilsqWYoCAYpbK9J69vZ31yvSdvLyd9MoEjhVXc8bFc1cVFVdzxcZzVxX8EBaGoAEPAQ+hhxafnxeGof7x/vKhhhedAAABAE4AAAXPBecAJgAAJRUhNTY3NjU0JyYjIgAVFBcWFxUhNSEmJyY1EDc2ISAXFhEUBwYHBc/9qLFjY4SE2Nj+92Nksv2oAT+eSUjAvwExAS/BwEdHobKysmGmpsrwkZH+3e/KpqZhsrKLlZW4AT7FxcXE/svClJSNAAIAcf/nBOQEeQANACoAAAEnJiMiBwYVFBcWMzI3GwEzAxcWFxY7ARUjIicmJwYHBiMiJyYREDc2MyADTiwtsoY9TUtMeYZIpGOkzSgJIykgWG5eVCkRLl4sj+tydX+NxgE3Agnn7W6Kttxpa9UB5wEl/aHbMSkwnFQqWG9XKZidARMBJoqaAAACAMD+VgSIBiEADgAcAAAlESMRECEgERAHBBEQISIDFjMgERAFNSARNCMgEQF5uQGqAbKsARj+HtRZb8UBIP4wAWvq/vtF/hEGAwHI/n/+7mRa/vX+JgFKrQE6ARoWqgFA2/7IAAABACD+VgR/BGAADgAAARMBMwERIxEBJisBNTMyAWn1AV7D/ju4/tosXzFGxQOw/UwDZPug/lYBqgNEfp4AAAIAcf/jBHUF8AAcAC0AAAEmIyIVFAUWFxYREAcGIyInJhE0NzY3JjUQITIXAQYHBhUUFxYzMjY1NCcmJyYD7Gbv/QEI0HWOiYnw74qJiTVLnAG53Xj+GEQ3VlVWlZOsW2F+QAURRnVcMCVwh/7r/vecnZ2cARPMpUAkT40BEEb+KB1JcczLcnPovsdgZwsGAAEAhf/jA8gEfAAyAAABJicmNTQ3NjMyFhcVJicmIyIHBhUUFxY7ARUjIgcGFRQXFjMyNzY3FQYHBiMiJyY1NDYBi3A8PHJxxEyqYmFQUUd3RUZEQ3SblIlITlRVl11VVUdaVFVQ7oGBigJcGEFAXY1PThgYpx0NDS4uQEYtLJgzOFhaODgSEyWrHA4OW1utbJIAAQBr/lID+AYUAB0AACUWFxYVFAcGIzQ1Fjc2NTQnJiMgAxABITUhFQAREALKhE9USlCjRSogIB86/aIBAjv97ANm/Sx/AUtPeHNQV0tMBSwjJTUsKgIzAewBWbm5/pT+J/5pAAEAuv5WBGQEewAVAAABESMRNCYjIgYVESMRMxU2NzYzMhcWBGS4fHyVrLm5QlladcFjYwKk+7IESJ+evqT9hwRgrmUyMnd4AAMAcf/pBHUGJAAIABEAIQAAASESFxYzMjc2EwInJiMiBwYDATIXFhEQBwYjIicmERA3NgOx/YMPRVaVllNJCRw2VpOZUUATAT3wiYmJifDxiImJiALG/tV/nJ2KAckBHGSenH7+/AK01NP+iv6L1NXV1AF1AXbT1AAAAQCmAAACbgRgAA0AAAERFBcWOwEVIyInJjUDAWMiJGxZb7RSUgEEYP0rkS4wnGBi1ALKAAEAvwAABIUEYAALAAATMxEBMwkBIwEHESO/vgHj4P5HAf7h/mKJvgRg/i8B0f5a/UYCQoH+PwAAAQA9AAAEfwYUAA0AAAkBIwkBIwEnJisBNRcWAnoCBcP+xv5+wwHrSi9rYHXiBWX6mwM8/MQEMsZ+ngIDAP//AK7+VgTlBGAQBgBkAAAAAQBKAAAEGARgABUAACEBMwE2NzY3NicmJzMxFhcWFRQHBgcBoP6qxgEheGRMBAIYHGq6RS4qiLF7BGD8VHysgXA1ZHeDWXxyTsSv5HQAAQBr/lIEAQYUACYAACUWFxYVFAcGIzQ1Fjc2NTQnJiMgERAlJBE0NyM1IRUgERQFFSQTEgLahE9USlCjRSogIB86/ZEBTf7o3NADFf2LAhD9xgIBfwFLT3hzUFdLTAUsIyU1LCoBtQEsWCQBBMVSubn+3b8Jqhb+vP7x//8Acf/jBHUEexIGAFAAAAABAEr/2QSYBGAAFwAAEyEVIxEUFjMyNjcVDgEjIiY1ESERIxEjSgQxjTE3DywHI0oleFz+Y7yPBGC4/VBIPwUBhQ0Mg7ACnPxYA6gAAgC6/lYEpAR7ABEAHQAAATY3NjMyABEQAiMiJicRIxE0BTQmIyIGFRQWMzI2ARQ9lzu2zAD//8x7sTq5AyunkpKnp5KSpwOYZloj/rz++P74/rxhZP2uA8/n3cvn58vL5+cAAAEAcf5SA+cEewAkAAAFIAAREAAhMhYXFS4BIyIGFRQWMzIXFhUUBwYjNDUWNzY1NCcmAqj+8/7WAS0BBlWiTE6dULPGxq+DUFRKUKNFKiAgHx0BPgEOARIBOiMjrCsr483N40xPeHNQV0tMBSwjJTUsKgAAAgBx/+ME1gRgAA0AHgAAASIHBhUUFjMyNjU0JyYnIRUjFhUQBwYjIicmERA3NgJzmFJWq5WTrFZPmgJjzm2JifDxiImJcQPObnO+yefoyLd6bpK4nN3+7ZydnZwBEwEVm4EAAAEAZAAABG0EYAARAAAlFjsBFSMiJyY1ESE1IRUhERQC5iRsWW+0UlL+XAQJ/lfMMJxgYtQCEri4/eORAAEAlf/jBCoEYAAcAAABERQXFjMyNzY3NicmJzMxFhcWFRQHBiciJyY1AwFSMjdrlmk7DwgeHGq6Ri0qgJz+s2ViAQRg/SuHQEXQdrtmgHeDWntzmv275AF4dsUCygACAHD+VgTRBGgACgApAAABIhURMjc2NTQnJicyFxYREAcGIxEjESInJhEQNzY3FQYHBhUUFxYzERADPUFfX1VWRjaMf4mJgcu3x4aIiGamQjpWVk1wA8uR/VJoXd/QcFudhI3+2f7xoZj+bgGRmZwBEwEekm0coxdOc77Kc2cCrwEuAAABADv+VQRkBGEAFwAABQMBIwEDJisBNRcEFxMBMwETFjsBFSckAtyV/s3ZAbK2MZoxRgECQZQBM9n+TrYxmjFG/v76AX/90AMYAdd+ngIHp/6BAjD86P4pfp4CBwAAAQBw/lYE0QRgABsAAAUmJyY1ETMRFBcWFxEzETY3NjURMxEUBwYHESMCRedrg7pVSny3g0NVuoN23LcZJWF38wKJ/X63TEIOA9X8LA5CVK8Cgf14/G5jI/5uAAABAIf/4wYnBGAAGgAABSARNBMzAhUQMzIRMxAzMhE0AzMSFRAhIAMCAib+YZvGj97Lqsvej8ab/mH+8CEpHQJS6wFA/sDw/k8CGv3mAbHwAUD+wOv9rgEr/tUAAAEAZAHpA5wCeQADAAATIRUhZAM4/MgCeZAAAQBkAekHnAJ5AAMAABMhFSFkBzj4yAJ5kAABAHUAzAZQBDgACQAAARUBJzchNSEnNwZQ/nd46fs9BMPpeAKvWv53eOmq6XgAAgDZARAF2wP0AB0AOwAAARUOASMiJyYnJicmIyIGBzU+ATMyFxYXFhcWMzI2ExUOASMiJyYnJicmIyIGBzU+ATMyFxYXFhcWMzI2Bdtps2FukgoHBg+bXlisYmmzYW6TCwUGD5teVqlnabNhbpIKBwYPm15YrGJps2FukwoFBw+bXlapAm+zTkU7BAMCBj1MVLNORTsFAgIGPUsB2rJPRTsEAwIGPUxTsk5FOwQCAwY9SwAAAgDZAAAF2wSoAAYACgAACQIVATUJASEVIQXb/EADwPr+BQL6/gUC+v4D+P7r/u6yAXCqAW/8AqoAAAIA2QAABdsEqAAGAAoAABM1ARUBNQkBFSE12QUC+v4DwQFB+v4D+LD+kar+kLIBEv3HqqoAAAEAsP38A1AHkgALAAABIzUQExITMwADAhEBc8Oguqag/vxaf/386gOXAeICMAED/fP+hv3u/O0AAQCw/fwBcweJAAMAABMzESOww8MHifZzAAABALD+FANQB4kACwAAARUQExITIwIDAhE1AXN/k8ug0JCgB4nq/KX+V/4U/mUBRQHuAiYDMuoAAAEAsP38A1AHkgALAAABNRADAgEzEhMSERUCjX9a/vygprqg/fzqAxMCEgF5Ag7+/f3Q/h78aeoAAQKN/fwDUAeJAAQAAAERIxEwA1DDB4n2cwmNAAEAsP4UA1AHiQALAAABMxUQAwIDIxITEhECjcOgkNCgy5N/B4nq/M392/4S/rsBmwHsAakDWwAAAQCw/fwDUAdtAAUAAAEjESEVIQFzwwKg/iP9/AlxwwABALD9/AFzB4kAAwAAEzMRI7DDwweJ9nMAAAEAsP4UA1AHiQAFAAABESEVIREBcwHd/WAHifdOwwl1AAABALD9/ANQB20ABQAAAREhNSERAo3+IwKg/fwIrsP2jwAAAQKN/fwDUAd6AAMAAAEzESMCjcPDB3r2ggABALD+FANQB3oABQAAATMRITUhAo3D/WAB3Qd69prDAAECo/3qBVgHbQANAAABIxE0NzYzIRUhIgcGFQNdum95ugET/udlRDn96gd135GesGZXmQABAKj9/ANdB4YAGAAAARYXFhkBIxEQJyYlJzUzIDc2GQEzERAHBgKUOiplum5L/vs9PQEDTW66ZSgCwSA9k/5D/egCDAG3X0EEAbtFYwGzAgz96P5ImDwAAQKj/hQFWAeGAA0AAAERFBcWMyEVISInJjURA105RGUBGf7tuHtvB4b4lJpWZrCej+EHZAAAAQKj/fQDXQeMAAMAAAEjETMDXbq6/fQJmAABAKj96gNdB20ADQAAARE0JyYjITUhMhcWFRECozlEZf7nARO6eW/96gd9mVdmsJ6R3/iLAAABAqP9/AVYB4YAGAAAASYnJhkBMxEQFxYhMxUHBAcGGQEjERA3NgNsPChlum5NAQM9Pf77S266ZSoCwSE8mAG4Ahj99P5NY0W7AQRBX/5J/fQCGAG9kz0AAQCo/hQDXQeGAA0AAAEzERQHBiMhNSEyNzY1AqO6b3u4/u0BGWVEOQeG+Jzhj56wZlaaAAEAdQDMCxQEOAAJAAABFQEnNyE1ISc3CxT+d3jp9nkJh+l4Aq9a/nd46arpeAAAAAEAAAChA1QAKwBoAAwAAQAAAAAAAAAAAAAAAAAIAAQAAAAAAAAAFgAqAGYAsgEAAU4BXAF5AZUBuwHUAeQB8QH9AgsCOwJSAoICvgLbAwsDSgNdA6UD4wP0BAoEHwQyBEYEfwT0BRAFRwV3BZ8FtwXMBgMGGwYoBj4GWQZpBocGnwbTBvYHMwdkB6EHtAfWB+sICwgqCEEIWAhqCHkIiwihCK4Ivgj2CSYJUgmCCbQJ1AoTCjUKRwpiCnwKiQq9Ct4LCgs6C2oLiQvEC+UMCQwdDDoMWgx5DJAMwgzQDQINMg1UDX8NqQ3jDhUOIQ5FDmcOfg68Ds8O6g8sD2kPrQ/gD/8QRxCQEMIQ5hEjET0RWRF4EYARpxHlEe0SExJFEn8SsRLPEv4TQBNvE50TyxPYE+UT/BRWFHMUjhSqFLcU0xTvFP0VGRUpFTYVRxVYFWUVdRWPFbsV1hXjFf4WKhZEFlsAAQAAAAJZmdWygT1fDzz1AB8IAAAAAADRfg7kAAAAANF+DuT31vxMDlkJ3AAAAAgAAAAAAAAAAATNAGYCiwAAAzUBNQOuAMUGtACeBRcAqgeaAHEGPQCBAjMAxQMfALADHwCkBAAAPQa0ANkCiwCeAuMAZAKLANsCsgAABRcAhwUXAOEFFwCWBRcAnAUXAGQFFwCeBRcAjwUXAKgFFwCLBRcAgQKyAPACsgCeBrQA2Qa0ANkGtADZBD8AkwgAAIcFeQAQBX0AyQWWAHMGKQDJBQ4AyQSaAMkGMwBzBgQAyQJcAMkCXP+WBT8AyQR1AMkG5wDJBfwAyQZMAHME0wDJBkwAcwWPAMkFFACHBOP/+gXbALIFeQAQB+kARAV7AD0E4//8BXsAXAMfALACsgAAAx8Axwa0ANkEAP/sBAAAqgTnAHsFFAC6BGYAcQUUAHEE7ABxAtEALwUUAHEFEgC6AjkAwQI5/9sEogC6AjkAwQfLALoFEgC6BOUAcQUUALoFFABxA0oAugQrAG8DIwA3BRIArgS8AD0GiwBWBLwAOwS8AD0EMwBYBRcBAAKyAQQFFwEABrQA2QTlAJ4EAADDAzUAXgM1AGIFFwCuAosA2wTlAMEGtAEZBXkAEAZMAHMFeQAQBQ4AyQZMAHMGHQBOBUYAcQUbAMAEvAAgBOUAcQRTAIUEWgBrBRIAugTlAHECtQCmBLcAvwS8AD0FFwCuBHgASgR2AGsE5QBxBNEASgUUALoEsgBxBRIAcQTRAGQEoQCVBUcAcASfADsFRwBwBrMAhwQAAGQIAABkBrQAdQa0ANkGtADZBrQA2QQAALAEAACwBAAAsAQAALAEAAKNBAAAsAQAALAEAACwBAAAsAQAALAEAAKNBAAAsAYAAqMGAACoBgACowYAAqMGAACoBgACowYAAKgLeAB1AAEAAAdt/h0AAA7+99b6UQ5ZAAEAAAAAAAAAAAAAAAAAAAChAAEEDgGQAAUAAAUzBZkAAAEeBTMFmQAAA9cAZgISAAACCwYDAwgEAgIEgAAAgwAAAGAAAAAAAAAAAFBmRWQAQAAgImUGFP4UAZoHbQHjAAAAAQAAAAAAAAAAAAMAAAADAAAAHAAAAAoAAADEAAMAAQAAABwABACoAAAAJgAgAAQABgB+AKsAsACzALcAuwDXA5QDmAObA6MDpgOpA8kgFCGSIkgiZf//AAAAIACrALAAsgC3ALsA1wOUA5gDmwOjA6YDqQOxIBMhkiJIImT////h/7X/sf+w/67/q/+Q/NT80fzP/Mj8xvzE/L3gdN733kLeJwABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADAAAAAAA6AAAAAAAAAASAAAAIAAAAH4AAAABAAAAqwAAAKsAAABgAAAAsAAAALAAAABhAAAAsgAAALMAAABiAAAAtwAAALcAAABlAAAAuwAAALsAAABmAAAA1wAAANcAAABnAAADlAAAA5QAAABoAAADmAAAA5gAAABpAAADmwAAA5sAAABqAAADowAAA6MAAABrAAADpgAAA6YAAABsAAADqQAAA6kAAABtAAADsQAAA8kAAABuAAAgEwAAIBQAAACHAAAhkgAAIZIAAACJAAAiSAAAIkgAAACKAAAiZAAAImUAAACLAAAABwBaAAMAAQQJAAABMAAAAAMAAQQJAAEAFgEwAAMAAQQJAAIACAFGAAMAAQQJAAMAFgEwAAMAAQQJAAQAFgEwAAMAAQQJAAUAGAFOAAMAAQQJAAYAFAFmAEMAbwBwAHkAcgBpAGcAaAB0ACAAKABjACkAIAAyADAAMAAzACAAYgB5ACAAQgBpAHQAcwB0AHIAZQBhAG0ALAAgAEkAbgBjAC4AIABBAGwAbAAgAFIAaQBnAGgAdABzACAAUgBlAHMAZQByAHYAZQBkAC4ACgBDAG8AcAB5AHIAaQBnAGgAdAAgACgAYwApACAAMgAwADAANgAgAGIAeQAgAFQAYQB2AG0AagBvAG4AZwAgAEIAYQBoAC4AIABBAGwAbAAgAFIAaQBnAGgAdABzACAAUgBlAHMAZQByAHYAZQBkAC4ACgBEAGUAagBhAFYAdQAgAGMAaABhAG4AZwBlAHMAIABhAHIAZQAgAGkAbgAgAHAAdQBiAGwAaQBjACAAZABvAG0AYQBpAG4ACgBEAGUAagBhAFYAdQAgAFMAYQBuAHMAQgBvAG8AawBWAGUAcgBzAGkAbwBuACAAMgAuADMANQBEAGUAagBhAFYAdQBTAGEAbgBzAAMAAAAAAAD/fgBaAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAgAAv//AAMAAQAAAAoA4ADoAFAAPAwAB90AAAAAAoIAAARgAAAF1QAAAAAAAARgAAAAAAAAAAAAAAAAAAAEYAAAAAAAAAFoAAAEYAAAAFUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQ4AAAJ2AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABaAAABDgAAAFoAAABaAAABDgAAAAAAAAAAAAABDgAAAFoAAABaAAABDgAAAFoAAABaAAAAWgAAAXIAAABaAAAAWgAAAjgAAPuPAAAAPAAAAAAAAAAAACgAHgAwAAcAAwA6AGIAigCyANoBFgE0AXABjgGsAAEABwAJAAoAPAA+AFwAXQBeAAEAAwAeAEAAiQAEAAAAAAAAAAMAjwAAACgJdQAAAI4AKAAoCY0AAQCNACgAAAmWAAAABAAAAAAAAAADAJIAAAAoCXUAAACRACgAKAmNAAEAkAAoAAAJlgAAAAQAAAAAAAAAAwCVAAAAKAl1AAAAlAAoACgJjQABAJMAKAAACXEAAAAEAAAAAAAAAAMAmAAAACgJZgAAAJcAKAAoCX4AAQCWACgAAAlxAAAABAAAAAAAAAAFAJsAAAAoCXIAAACcACgAKAmYAAEAmgAoACgJigAAAJwAKAAoCZgAAQCZACgAAAmDAAAABAAAAAAAAAACAF0AAAAoCAAAAABdACgAAAgAAAEABAAAAAAAAAAFAJ8AAAAoCXIAAACcACgAKAmYAAEAngAoACgJigAAAJwAKAAoCZgAAQCdACgAAAmDAAAABAAAAAAAAAACAB4AAAAoBQIAAAAeACgAAAUCAAEABAAAAAAAAAACAEAAAAAoBCgAAABAACgAAAQoAAEAAAACAIkF3ACgCqA=";
+const FONT_BOLD = "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BAAAsgOBAG0DgQBaBeMArgMKANEFKwDBBrQBAAYxAAoGzQBmBjEACgV3ALwGzQBmBs0ANwV/AGMFugCsBXMAHwV/AFkEdABuBLoAWQWyAKwFfwBYAx4AoAWvAKwFEAA9BeMArgVzAB8EugBZBX8AWAZUAFYFugCsBL4AWAY7AFgFGwArBWcAnwZCAIQFKQA0BloAhQb0AFgEAABuCAAAbga0AHUA2QDZANkAAAABAAAHbf4dAAAQIfdy+TIPzQABAAAAAAAAAAAAAAAAAAAAigABBJUCvAAFAAAFMwWZAAABHgUzBZkAAAPXAGYCEgAAAgsIAwMGBAICBIAAAIMAAABgAAAAAAAAAABQZkVkACAAICJlBhT+FAGaB20B4wAAAAEAAAAAAAAAAAADAAAAAwAAABwAAAAKAAAAxAADAAEAAAAcAAQAqAAAACYAIAAEAAYAfgCrALAAswC3ALsA1wOUA5gDmwOjA6YDqQPJIBQhkiJIImX//wAAACAAqwCwALIAtwC7ANcDlAOYA5sDowOmA6kDsSATIZIiSCJk////4f+1/7H/sP+u/6v/kPzU/NH8z/zI/Mb8xPy94HTe995C3icAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwAAAAAAOgAAAAAAAAAEgAAACAAAAB+AAAAAQAAAKsAAACrAAAAYAAAALAAAACwAAAAYQAAALIAAACzAAAAYgAAALcAAAC3AAAAZQAAALsAAAC7AAAAZgAAANcAAADXAAAAZwAAA5QAAAOUAAAAaAAAA5gAAAOYAAAAaQAAA5sAAAObAAAAagAAA6MAAAOjAAAAawAAA6YAAAOmAAAAbAAAA6kAAAOpAAAAbQAAA7EAAAPJAAAAbgAAIBMAACAUAAAAhwAAIZIAACGSAAAAiQAAIkgAACJIAAAAigAAImQAACJlAAAAiwAAAAcAWgADAAEECQAAATAAAAADAAEECQABABYBMAADAAEECQACAAgBRgADAAEECQADACABTgADAAEECQAEACABTgADAAEECQAFABgBbgADAAEECQAGAB4BhgBDAG8AcAB5AHIAaQBnAGgAdAAgACgAYwApACAAMgAwADAAMwAgAGIAeQAgAEIAaQB0AHMAdAByAGUAYQBtACwAIABJAG4AYwAuACAAQQBsAGwAIABSAGkAZwBoAHQAcwAgAFIAZQBzAGUAcgB2AGUAZAAuAAoAQwBvAHAAeQByAGkAZwBoAHQAIAAoAGMAKQAgADIAMAAwADYAIABiAHkAIABUAGEAdgBtAGoAbwBuAGcAIABCAGEAaAAuACAAQQBsAGwAIABSAGkAZwBoAHQAcwAgAFIAZQBzAGUAcgB2AGUAZAAuAAoARABlAGoAYQBWAHUAIABjAGgAYQBuAGcAZQBzACAAYQByAGUAIABpAG4AIABwAHUAYgBsAGkAYwAgAGQAbwBtAGEAaQBuAAoARABlAGoAYQBWAHUAIABTAGEAbgBzAEIAbwBsAGQARABlAGoAYQBWAHUAIABTAGEAbgBzACAAQgBvAGwAZABWAGUAcgBzAGkAbwBuACAAMgAuADMANQBEAGUAagBhAFYAdQBTAGEAbgBzAC0AQgBvAGwAZAAAAAMAAAAAAAD/fgBaAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAgAAv//AAM=";
+
+let FONTS_IN = null;
+function ensureFonts(d) {
+  d.addFileToVFS("Bench-Regular.ttf", FONT_REG);
+  d.addFont("Bench-Regular.ttf", "Bench", "normal");
+  d.addFileToVFS("Bench-Bold.ttf", FONT_BOLD);
+  d.addFont("Bench-Bold.ttf", "Bench", "bold");
+}
+
+/* Split marked-up text into runs. Brace groups nest, so match depth. */
+function richRuns(txt, script) {
+  const out = [];
+  let i = 0, plain = "";
+  const flush = () => { if (plain) { out.push({ t: plain, script }); plain = ""; } };
+  while (i < txt.length) {
+    const ch = txt[i];
+    if ((ch === "_" || ch === "^") && txt[i + 1] === "{") {
+      let depth = 1, j = i + 2;
+      while (j < txt.length && depth > 0) {
+        if (txt[j] === "{") depth++;
+        else if (txt[j] === "}") depth--;
+        if (depth > 0) j++;
+      }
+      if (depth !== 0) { plain += ch; i++; continue; }
+      flush();
+      const inner = ch === "_" ? -1 : 1;
+      richRuns(txt.slice(i + 2, j), script || inner).forEach(r => out.push(r));
+      i = j + 1;
+    } else { plain += ch; i++; }
+  }
+  flush();
+  return out;
+}
+
+function richLayout(d, txt, size, weight) {
+  const runs = richRuns(txt, 0);
+  let w = 0;
+  runs.forEach(r => {
+    r.size = r.script ? size * 0.72 : size;
+    r.dy = r.script === -1 ? size * 0.075 : r.script === 1 ? -size * 0.10 : 0;
+    d.setFont("Bench", weight); d.setFontSize(r.size);
+    r.w = d.getTextWidth(r.t);
+    w += r.w;
+  });
+  return { runs, w };
+}
+
+/* Draws marked-up text; returns its width. align: "left" | "right". */
+function richText(d, txt, x, y, size, weight, color, align) {
+  const wt = weight || "normal";
+  const lay = richLayout(d, txt, size, wt);
+  let cx = align === "right" ? x - lay.w : x;
+  d.setTextColor(color[0], color[1], color[2]);
+  lay.runs.forEach(r => {
+    d.setFont("Bench", wt); d.setFontSize(r.size);
+    d.text(r.t, cx, y + r.dy);
+    cx += r.w;
+  });
+  d.setFontSize(size);
+  return lay.w;
+}
+
+function buildPdf() {
+  if (!window.jspdf) { alert("The PDF library did not load. Reload the page and try again."); return null; }
+  const { jsPDF } = window.jspdf;
+  const d = new jsPDF({ unit: "mm", format: "a4" });
+  ensureFonts(d);
+  const L = 16, R = 194, W = R - L;
+  let y = 0;
+
+  const INK = [0, 0, 0], MUT = [110, 110, 114], ACC = [204, 0, 0], CAL = [153, 0, 0];
+  const page = () => { if (y > 268) { d.addPage(); y = 20; } };
+  const head = t => {
+    y += 5; page();
+    richText(d, t.toUpperCase(), L, y, 8.5, "bold", MUT, "left");
+    y += 1.6; d.setDrawColor(MUT[0], MUT[1], MUT[2]); d.setLineWidth(0.2); d.line(L, y, R, y); y += 4.4;
+  };
+  const kv = (k, v, u, strong) => {
+    page();
+    richText(d, k, L, y, 9, "normal", INK, "left");
+    const uw = u ? richLayout(d, u, 7.5, "normal").w + 2 : 0;
+    richText(d, String(v), R - uw, y, 9, strong ? "bold" : "normal", strong ? CAL : INK, "right");
+    if (u) richText(d, u, R - uw + 2, y, 7.5, "normal", MUT, "left");
+    y += 5;
+  };
+  const para = t => {
+    page();
+    d.setFont("Bench", "normal"); d.setFontSize(8); d.setTextColor(MUT[0], MUT[1], MUT[2]);
+    const lines = d.splitTextToSize(t, W);
+    d.text(lines, L, y); y += lines.length * 3.6 + 2;
+  };
+
+  const sp = S(), t = sp.targets, mn = mixNow(), Vt = mn.Vt, Sr = mn.Sr, mix = mn.mix;
+  const rows = reduceRows();
+  const good = rows.filter(r => fin(r.doc));
+  const stamp = new Date().toISOString().slice(0, 10);
+
+  y = 20;
+  richText(d, "Carbonation specimen record", L, y, 16, "bold", INK, "left");
+  y += 7;
+  richText(d, "Specimen " + CUR, L, y, 11, "bold", ACC, "left");
+  richText(d, stamp, R, y, 8.5, "normal", MUT, "right");
+  y += 3; d.setDrawColor(ACC[0], ACC[1], ACC[2]); d.setLineWidth(0.5); d.line(L, y, R, y); y += 5;
+  para("Reduced on the phase relations of Phase_diagram_derivations.md. The degree of carbonation counts only carbonate formed during the test, and is referred to the reactive lime, that is the portlandite fraction of the lime times the lime content times the dry soil mass, rather than to the whole lime mass.");
+
+  head("Materials");
+  kv("Portlandite fraction of the lime, \u03c7_{p}", fmt(MAT.chi_p, 4), "\u2013");
+  kv("Carbonate fraction of the lime, \u03c7_{c}", fmt(MAT.chi_c, 4), "\u2013");
+  kv("Inert fraction \u03c7_{i}, by difference", fmt(chiI(MAT), 4), "\u2013");
+  kv("Native carbonate of the soil, \u03c7_{cs}", fmt(MAT.chi_cs, 4), "\u2013");
+  kv("Effective specific gravity, G_{s} / G_{l}", fmt(GsEff(MAT), 3) + "  /  " + fmt(GlEff(MAT), 3), "\u2013");
+  kv("Calcimeter headspace V_{h} / constant k", fmt(MAT.Vhead, 3) + " L  /  " + fmt(calK(MAT.Vhead, sp.cal.Tread), 2), "kPa/g");
+  if (chiI(MAT) < 0) {
+    para("WARNING: \u03c7p + \u03c7c exceeds 1, leaving no room for inert impurity. The assay and the carbonate reading are not mutually consistent, so every degree of carbonation below inherits that inconsistency.");
+  }
+
+  head("Mix design");
+  kv("Mould volume V_{t}", fmt(Vt, 1), "cm^{3}");
+  kv("Target void ratio e", fmt(t.e, 3), "\u2013");
+  kv("Degree of saturation S_{r}", fmt(Sr, 3), "\u2013");
+  kv("Lime content \u03b2_{l}, as batched", fmt(t.beta_l, 4), "\u2013");
+  kv("Dry soil m_{s}", fmt(mix.ms, 1), "g", true);
+  kv("Hydrated lime m_{l}", fmt(mix.ml, 2), "g");
+  kv("Water m_{w}", fmt(mix.mw, 1), "g");
+  kv("Total placed", fmt(mix.wet, 1), "g");
+  kv("Water content w, on dry soil", fmt(mix.w, 4), "\u2013");
+
+  head("Lime and water");
+  kv("\u03b2_{l} / w", fmt(t.beta_l / mix.w, 3), "\u2013");
+  kv("Effective, \u03c7_{p}\u03b2_{l} / w", fmt(MAT.chi_p * t.beta_l / mix.w, 3), "\u2013");
+  kv("Volumetric, \u03b8_{l} / \u03b8_{w}", fmt(mix.theta_l / mix.theta_w, 3), "\u2013");
+  kv("Water film \u03b4_{w}", fmt(filmDelta(mix.w, t.beta_l, MAT.Sl, MAT.Ss), 0), "nm");
+  kv("Dissolution turnovers N", fmt(turnovers(MAT, t.beta_l, mix.w), 0), "\u2013");
+
+  head("Carbon dioxide");
+  const req = co2Required(MAT, mix.ml), intro = M_CO2 * molesStdL(sp.post.co2L);
+  const mbSpec = good.length ? good.reduce((a, r) => a + r.betaB, 0) / good.length * mix.ms : NaN;
+  kv("Required for all reactive lime", fmt(req, 2), "g");
+  kv("Introduced", fmt(intro, 2), "g");
+  kv("Supply ratio R_{CO_{2}}", fmt(intro / req, 3), "\u2013");
+  kv("Utilisation \u03b7_{CO_{2}}", fmt(S_C * mbSpec / intro, 3), "\u2013");
+
+  head("Depth series");
+  const cols = [L, L + 36, L + 62, L + 94, L + 124, L + 151, R];
+  const hdr = ["Depth cm", "Dry mass g", "\u0394P kPa", "Total CaCO_{3} g", "New CaCO_{3} g", "DoC", "\u03b2_{b}"];
+  page();
+  hdr.forEach((h, i) => richText(d, h, cols[i], y, 7.5, "bold", MUT, i === 0 ? "left" : "right"));
+  y += 1.5; d.setDrawColor(MUT[0], MUT[1], MUT[2]); d.setLineWidth(0.2); d.line(L, y, R, y); y += 4;
+  rows.forEach(r => {
+    page();
+    const cells = [fmt(r.z, 2), fmt(r.md, 2), fmt(r.dP, 1), fmt(r.mct, 4), fmt(r.mb, 4), fmt(r.doc, 3), fmt(r.betaB, 4)];
+    cells.forEach((c, i) => {
+      const bold = i === 5;
+      richText(d, c, cols[i], y, 8.5, bold ? "bold" : "normal", bold ? CAL : INK, i === 0 ? "left" : "right");
+    });
+    y += 4.8;
+  });
+
+  // keep the result block and its plot on one page
+  if (y > 200) { d.addPage(); y = 20; }
+  head("Result");
+  if (good.length) {
+    const meanDoC = good.reduce((a, r) => a + r.doc, 0) / good.length;
+    const meanBeta = good.reduce((a, r) => a + r.betaB, 0) / good.length;
+    const ps = postState(MAT, Vt, t.e, t.beta_l, meanBeta);
+    const mbG = fin(sp.post.dry0) && fin(sp.post.dryF) ? mbFromDryMass(sp.post.dryF, sp.post.dry0) : NaN;
+    kv("Mean degree of carbonation", fmt(meanDoC, 3), "\u2013", true);
+    kv("Binder content \u03b2_{b}", fmt(meanBeta, 4), "\u2013");
+    kv("Volumetric binder \u03b8_{b}", fmt(ps.theta_b, 4), "\u2013");
+    kv("Void ratio e, before \u2192 after", fmt(t.e, 3) + "  \u2192  " + fmt(ps.ef, 3), "\u2013");
+    kv("Binder from carbonate / from weighings",
+       fmt(mbSpec, 2) + "  /  " + (fin(mbG) ? fmt(mbG, 2) : "not recorded"), "g");
+    if (meanDoC > 1.02) para("A degree of carbonation above 1 means the specimen was fully carbonated and the excess is measurement error, or that the soil's native carbonate is set too low or the lime purity too high.");
+
+    y += 4; page();
+    const px = L, pw = 76, ph = 54, pyTop = y;
+    const zMax = Math.max(sp.mould.ht, 1);
+    const xMax = Math.max(1.2, Math.max.apply(null, good.map(r => r.doc)));
+    const X = v => px + (v / xMax) * pw, Y = v => pyTop + (v / zMax) * ph;
+    d.setDrawColor(215, 220, 217); d.setLineWidth(0.15);
+    for (let v = 0; v <= xMax + 1e-9; v += 0.2) d.line(X(v), pyTop, X(v), pyTop + ph);
+    for (let v = 0; v <= zMax + 1e-9; v += 5) d.line(px, Y(v), px + pw, Y(v));
+    d.setDrawColor(MUT[0], MUT[1], MUT[2]); d.setLineWidth(0.3);
+    d.line(px, pyTop, px, pyTop + ph); d.line(px, pyTop + ph, px + pw, pyTop + ph);
+    d.setLineDashPattern([1, 1], 0); d.line(X(1), pyTop, X(1), pyTop + ph); d.setLineDashPattern([], 0);
+    for (let v = 0; v <= xMax + 1e-9; v += 0.4)
+      richText(d, v.toFixed(1), X(v), pyTop + ph + 3.5, 6.5, "normal", MUT, "left");
+    for (let v = 0; v <= zMax + 1e-9; v += 5)
+      richText(d, String(v), px - 1.5, Y(v) + 1, 6.5, "normal", MUT, "right");
+    richText(d, "DoC  [\u2013]", px + pw / 2 - 5, pyTop + ph + 7.5, 7, "normal", MUT, "left");
+    richText(d, "z  [cm]", px - 12, pyTop - 2, 7, "normal", MUT, "left");
+    const pts = good.slice().sort((a, b) => a.z - b.z);
+    d.setDrawColor(ACC[0], ACC[1], ACC[2]); d.setLineWidth(0.6);
+    pts.forEach((r, i) => { if (i) d.line(X(pts[i - 1].doc), Y(pts[i - 1].z), X(r.doc), Y(r.z)); });
+    d.setFillColor(ACC[0], ACC[1], ACC[2]);
+    pts.forEach(r => d.circle(X(r.doc), Y(r.z), 0.9, "F"));
+    richText(d, "Degree of carbonation against depth", px + pw + 10, pyTop + 4, 8, "bold", INK, "left");
+    d.setFont("Bench", "normal"); d.setFontSize(7.5); d.setTextColor(MUT[0], MUT[1], MUT[2]);
+    d.text(d.splitTextToSize("Depth z in cm from the top of the specimen. The dashed line marks complete conversion of the reactive lime; points are digested sub-samples.", W - pw - 10), px + pw + 10, pyTop + 9);
+    y = pyTop + ph + 12;
+  } else {
+    para("No depth readings recorded yet.");
+  }
+
+  const pages = d.getNumberOfPages();
+  for (let i = 1; i <= pages; i++) {
+    d.setPage(i);
+    richText(d, "Carbonation Bench Log  \u00b7  " + CUR + "  \u00b7  " + stamp, L, 290, 7, "normal", MUT, "left");
+    richText(d, i + " / " + pages, R, 290, 7, "normal", MUT, "right");
+  }
+  return d;
+}
+
+/* =======================================================================
+   Render
+   ======================================================================= */
+function renderAll() {
+  // Inputs are rebuilt on every render, so carry the caret across the rebuild;
+  // without this, typing loses focus after the first keystroke.
+  const act = document.activeElement;
+  const keep = act && act.tagName === "INPUT" && act.id ? act.id : null;
+  const caret = keep ? [act.selectionStart, act.selectionEnd] : null;
+  if (!keep) EDITING = null;
+  else if (!EDITING || EDITING.id !== keep) EDITING = { id: keep, raw: act.value };
+
+  renderRail();
+  renderMaterials();
+  renderMix();
+  renderCal();
+  renderCmp();
+  renderPost();
+  $("#specNote").textContent = S().example ? "Example data — overwrite freely." : "";
+
+  if (keep) {
+    const back = document.getElementById(keep);
+    if (back) {
+      back.focus();
+      try { back.setSelectionRange(caret[0], caret[1]); } catch {}
+    }
+  }
+}
+/* Theme: three states, matching the stylesheet — system (no attribute),
+   light, dark. Stored per viewer; storage can throw in a private window. */
+const THEMES = ["system", "light", "dark"];
+let THEME = "system";
+function applyTheme(t) {
+  if (t === "system") document.documentElement.removeAttribute("data-theme");
+  else document.documentElement.setAttribute("data-theme", t);
+  const b = $("#themeBtn");
+  b.textContent = t === "system" ? "Theme: auto" : t === "light" ? "Theme: light" : "Theme: dark";
+  b.setAttribute("aria-label", "Colour theme: " + (t === "system" ? "follows your system" : t) + ". Click to change.");
+}
+try { THEME = localStorage.getItem("bench-theme") || "system"; } catch {}
+if (THEMES.indexOf(THEME) < 0) THEME = "system";
+applyTheme(THEME);
+$("#themeBtn").onclick = () => {
+  THEME = THEMES[(THEMES.indexOf(THEME) + 1) % THEMES.length];
+  try { localStorage.setItem("bench-theme", THEME); } catch {}
+  applyTheme(THEME);
+};
+
+renderSpecSel();
+renderAll();
+boot();
+</script>
+</body>
+</html>

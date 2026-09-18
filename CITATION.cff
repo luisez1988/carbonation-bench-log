@@ -1,0 +1,29 @@
+cff-version: 1.2.0
+message: "If you use this tool or the derivation behind it, please cite it as below."
+title: "Carbonation Bench Log: phase-diagram relations and a bench tool for carbonation experiments on lime-treated soil"
+abstract: >-
+  A browser tool and the phase-diagram derivation it implements, for preparing and reducing carbonation experiments on lime-treated soil. The degree of carbonation is referred to the reactive lime and excludes carbonate present before the test, which corrects two systematic errors common in spreadsheet reductions.
+type: software
+license: MIT
+version: "1.0.0"
+date-released: "2026-09-18"
+
+# ---- fill these in before pushing -------------------------------------------
+authors:
+  - family-names: "Zambrano-Cruzatty"
+    given-names: "Luis E."
+    email: "lezambra@ncsu.edu"
+    affiliation: "North Carolina State University"
+    # orcid: "https://orcid.org/0000-0000-0000-0000"
+repository-code: "https://github.com/luisez1988/carbonation-bench-log"
+url: "https://luisez1988.github.io/carbonation-bench-log/"
+# -----------------------------------------------------------------------------
+
+keywords:
+  - carbonation
+  - lime-treated soil
+  - degree of carbonation
+  - phase relations
+  - soil stabilisation
+  - calcimetry
+  - geotechnical engineering

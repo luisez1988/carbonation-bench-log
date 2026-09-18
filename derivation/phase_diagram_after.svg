@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 620" width="960" height="620" font-family="Helvetica, Arial, sans-serif">
+  <rect x="0" y="0" width="960" height="620" fill="#ffffff"/>
+
+  <text x="410" y="28" text-anchor="middle" font-size="17" font-weight="bold" fill="#111111">Phase diagram after carbonation</text>
+  <text x="410" y="48" text-anchor="middle" font-size="12" fill="#555555">Partial conversion. Total volume V<tspan dy="3" font-size="9.5">t</tspan><tspan dy="-3" font-size="12"> is held constant by the rigid mould; band heights are schematic.</tspan></text>
+
+  <text x="228" y="66" text-anchor="end" font-size="13" font-weight="bold" fill="#111111">Volume</text>
+  <text x="400" y="66" text-anchor="middle" font-size="13" font-weight="bold" fill="#111111">Constituent</text>
+  <text x="572" y="66" text-anchor="start" font-size="13" font-weight="bold" fill="#111111">Mass</text>
+
+  <!-- ===== blocks ===== -->
+  <g stroke-width="1.2">
+    <rect x="290" y="70"  width="220" height="107" fill="#eaf2fa" stroke="#4a7fb5"/>
+    <rect x="290" y="177" width="220" height="70"  fill="#bbd9f0" stroke="#2e6da4"/>
+    <rect x="290" y="247" width="220" height="140" fill="#d8cfc0" stroke="#8a7b66"/>
+    <rect x="290" y="387" width="220" height="40"  fill="#f2e2b8" stroke="#a8903f"/>
+    <rect x="290" y="427" width="220" height="24"  fill="#f5d9d9" stroke="#b05a5a"/>
+    <rect x="290" y="451" width="220" height="29"  fill="#e0b558" stroke="#8a6a1e"/>
+    <rect x="290" y="480" width="220" height="35"  fill="#f2e2b8" stroke="#a8903f"/>
+    <rect x="290" y="515" width="220" height="30"  fill="#dedede" stroke="#888888"/>
+  </g>
+
+  <!-- dashed ghost of the pre-reaction gas/water interface -->
+  <line x1="290" y1="180" x2="510" y2="180" stroke="#4a7fb5" stroke-width="1" stroke-dasharray="4 3"/>
+  <text x="516" y="172" font-size="10.5" fill="#4a7fb5">before</text>
+
+  <!-- ===== constituent names ===== -->
+  <g font-size="13" fill="#111111" text-anchor="middle">
+    <text x="400" y="128">Gas (air + CO<tspan dy="4" font-size="10">2</tspan><tspan dy="-4" font-size="13"> + H</tspan><tspan dy="4" font-size="10">2</tspan><tspan dy="-4" font-size="13">O vapour)</tspan></text>
+    <text x="400" y="217">Water</text>
+    <text x="400" y="313">Soil minerals, non-carbonate</text>
+    <text x="400" y="412">CaCO<tspan dy="4" font-size="10">3</tspan><tspan dy="-4" font-size="13"> native to the soil</tspan></text>
+    <text x="400" y="444" font-size="12">Ca(OH)<tspan dy="4" font-size="9.5">2</tspan><tspan dy="-4" font-size="12"> &#8212; unreacted</tspan></text>
+    <text x="400" y="471" font-weight="bold">New CaCO<tspan dy="4" font-size="10">3</tspan><tspan dy="-4" font-size="13"> &#8212; the binder</tspan></text>
+    <text x="400" y="502">CaCO<tspan dy="4" font-size="10">3</tspan><tspan dy="-4" font-size="13"> in the lime</tspan></text>
+    <text x="400" y="535">Inert impurity of the lime</text>
+  </g>
+
+  <!-- ===== volume labels (left) ===== -->
+  <g font-size="13" fill="#111111" text-anchor="end">
+    <text x="278" y="128">V<tspan dy="4" font-size="10">g</tspan><tspan dy="-4" font-size="13"> &#8722; &#916;V</tspan><tspan dy="4" font-size="10">s</tspan></text>
+    <text x="278" y="217">V<tspan dy="4" font-size="10">w</tspan><tspan dy="-4" font-size="13">  (unchanged)</tspan></text>
+    <text x="278" y="322">(1 &#8722; &#967;<tspan dy="4" font-size="10">cs</tspan><tspan dy="-4" font-size="13">) m</tspan><tspan dy="4" font-size="10">s</tspan><tspan dy="-4" font-size="13"> / G</tspan><tspan dy="4" font-size="10">s</tspan><tspan dy="-4" font-size="13"> &#961;</tspan><tspan dy="4" font-size="10">w</tspan></text>
+    <text x="278" y="412">&#967;<tspan dy="4" font-size="10">cs</tspan><tspan dy="-4" font-size="13"> m</tspan><tspan dy="4" font-size="10">s</tspan><tspan dy="-4" font-size="13"> / G</tspan><tspan dy="4" font-size="10">c</tspan><tspan dy="-4" font-size="13"> &#961;</tspan><tspan dy="4" font-size="10">w</tspan></text>
+    <text x="278" y="444" font-size="12">(&#967;<tspan dy="4" font-size="9.5">p</tspan><tspan dy="-4" font-size="12">&#946;</tspan><tspan dy="4" font-size="9.5">l</tspan><tspan dy="-4" font-size="12"> &#8722; s</tspan><tspan dy="4" font-size="9.5">p</tspan><tspan dy="-4" font-size="12">&#946;</tspan><tspan dy="4" font-size="9.5">b</tspan><tspan dy="-4" font-size="12">) m</tspan><tspan dy="4" font-size="9.5">s</tspan><tspan dy="-4" font-size="12"> / G</tspan><tspan dy="4" font-size="9.5">p</tspan><tspan dy="-4" font-size="12"> &#961;</tspan><tspan dy="4" font-size="9.5">w</tspan></text>
+    <text x="278" y="471" font-weight="bold">m<tspan dy="4" font-size="10">b</tspan><tspan dy="-4" font-size="13"> / G</tspan><tspan dy="4" font-size="10">c</tspan><tspan dy="-4" font-size="13"> &#961;</tspan><tspan dy="4" font-size="10">w</tspan></text>
+    <text x="278" y="502">&#967;<tspan dy="4" font-size="10">c</tspan><tspan dy="-4" font-size="13"> m</tspan><tspan dy="4" font-size="10">l</tspan><tspan dy="-4" font-size="13"> / G</tspan><tspan dy="4" font-size="10">c</tspan><tspan dy="-4" font-size="13"> &#961;</tspan><tspan dy="4" font-size="10">w</tspan></text>
+    <text x="278" y="535">&#967;<tspan dy="4" font-size="10">i</tspan><tspan dy="-4" font-size="13"> m</tspan><tspan dy="4" font-size="10">l</tspan><tspan dy="-4" font-size="13"> / G</tspan><tspan dy="4" font-size="10">i</tspan><tspan dy="-4" font-size="13"> &#961;</tspan><tspan dy="4" font-size="10">w</tspan></text>
+  </g>
+
+  <!-- ===== mass labels (right) ===== -->
+  <g font-size="13" fill="#111111" text-anchor="start">
+    <text x="522" y="128" fill="#666666">&#8776; 0</text>
+    <text x="522" y="217">m<tspan dy="4" font-size="10">w</tspan></text>
+    <text x="522" y="322">(1 &#8722; &#967;<tspan dy="4" font-size="10">cs</tspan><tspan dy="-4" font-size="13">) m</tspan><tspan dy="4" font-size="10">s</tspan></text>
+    <text x="522" y="412">&#967;<tspan dy="4" font-size="10">cs</tspan><tspan dy="-4" font-size="13"> m</tspan><tspan dy="4" font-size="10">s</tspan></text>
+    <text x="522" y="444" font-size="12">&#967;<tspan dy="4" font-size="9.5">p</tspan><tspan dy="-4" font-size="12"> m</tspan><tspan dy="4" font-size="9.5">l</tspan><tspan dy="-4" font-size="12"> &#8722; s</tspan><tspan dy="4" font-size="9.5">p</tspan><tspan dy="-4" font-size="12"> m</tspan><tspan dy="4" font-size="9.5">b</tspan></text>
+    <text x="522" y="471" font-weight="bold">m<tspan dy="4" font-size="10">b</tspan></text>
+    <text x="522" y="502">&#967;<tspan dy="4" font-size="10">c</tspan><tspan dy="-4" font-size="13"> m</tspan><tspan dy="4" font-size="10">l</tspan></text>
+    <text x="522" y="535">&#967;<tspan dy="4" font-size="10">i</tspan><tspan dy="-4" font-size="13"> m</tspan><tspan dy="4" font-size="10">l</tspan></text>
+  </g>
+
+  <!-- ===== left brackets: voids / solids ===== -->
+  <g stroke="#333333" stroke-width="1.2" fill="none">
+    <path d="M 60 70 L 46 70 L 46 247 L 60 247"/>
+    <path d="M 60 247 L 46 247 L 46 545 L 60 545"/>
+  </g>
+  <g font-size="13" fill="#111111" text-anchor="middle">
+    <text x="30" y="154">V<tspan dy="4" font-size="10">v,f</tspan></text>
+    <text x="30" y="392">V<tspan dy="4" font-size="10">s,f</tspan></text>
+  </g>
+  <g stroke="#333333" stroke-width="1.2" fill="none">
+    <path d="M 14 70 L 6 70 L 6 545 L 14 545"/>
+  </g>
+  <text x="18" y="310" font-size="13" fill="#111111" transform="rotate(-90 18 310)" text-anchor="middle">V<tspan dy="4" font-size="10">t</tspan></text>
+
+  <!-- ===== right brackets: total carbonate ===== -->
+  <g stroke="#333333" stroke-width="1.2" fill="none">
+    <path d="M 690 387 L 704 387 L 704 427 L 690 427"/>
+    <path d="M 690 451 L 704 451 L 704 515 L 690 515"/>
+    <path d="M 712 387 L 722 387 L 722 515 L 712 515" stroke-dasharray="4 3"/>
+  </g>
+  <text x="730" y="447" font-size="12.5" fill="#111111">m<tspan dy="4" font-size="9.5">ct</tspan><tspan dy="-4" font-size="12.5"> total carbonate</tspan></text>
+  <text x="730" y="465" font-size="11.5" fill="#666666">(what the calcimeter reads)</text>
+
+  <!-- ===== reaction arrows ===== -->
+  <defs>
+    <marker id="ar" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#2e6da4"/>
+    </marker>
+    <marker id="ar2" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#8a6a1e"/>
+    </marker>
+  </defs>
+  <path d="M 120 100 L 286 100" stroke="#2e6da4" stroke-width="1.4" fill="none" marker-end="url(#ar)"/>
+  <text x="120" y="94" font-size="12" fill="#2e6da4">CO<tspan dy="4" font-size="9.5">2</tspan><tspan dy="-4" font-size="12"> in</tspan></text>
+  <path d="M 286 148 L 120 148" stroke="#2e6da4" stroke-width="1.4" fill="none" marker-end="url(#ar)"/>
+  <text x="120" y="164" font-size="12" fill="#2e6da4">H<tspan dy="4" font-size="9.5">2</tspan><tspan dy="-4" font-size="12">O vapour out</tspan></text>
+  <path d="M 600 439 C 640 439 640 466 604 466" stroke="#8a6a1e" stroke-width="1.4" fill="none" marker-end="url(#ar2)"/>
+
+  <!-- ===== footer ===== -->
+  <g font-size="12.5" fill="#333333">
+    <text x="20" y="574">&#916;V<tspan dy="4" font-size="9.5">s</tspan><tspan dy="-4" font-size="12.5"> = m</tspan><tspan dy="4" font-size="9.5">b</tspan><tspan dy="-4" font-size="12.5"> (1/G</tspan><tspan dy="4" font-size="9.5">c</tspan><tspan dy="-4" font-size="12.5"> &#8722; s</tspan><tspan dy="4" font-size="9.5">p</tspan><tspan dy="-4" font-size="12.5">/G</tspan><tspan dy="4" font-size="9.5">p</tspan><tspan dy="-4" font-size="12.5">) / &#961;</tspan><tspan dy="4" font-size="9.5">w</tspan><tspan dy="-4" font-size="12.5"> &gt; 0</tspan></text>
+    <text x="300" y="574">oven-dry mass gain = s<tspan dy="4" font-size="9.5">g</tspan><tspan dy="-4" font-size="12.5"> m</tspan><tspan dy="4" font-size="9.5">b</tspan></text>
+    <text x="560" y="574">&#946;<tspan dy="4" font-size="9.5">b</tspan><tspan dy="-4" font-size="12.5"> = m</tspan><tspan dy="4" font-size="9.5">b</tspan><tspan dy="-4" font-size="12.5">/m</tspan><tspan dy="4" font-size="9.5">s</tspan></text>
+    <text x="660" y="574">&#952;<tspan dy="4" font-size="9.5">b</tspan><tspan dy="-4" font-size="12.5"> = V</tspan><tspan dy="4" font-size="9.5">b</tspan><tspan dy="-4" font-size="12.5">/V</tspan><tspan dy="4" font-size="9.5">t</tspan></text>
+    <text x="760" y="574">DoC = m<tspan dy="4" font-size="9.5">b</tspan><tspan dy="-4" font-size="12.5"> / m</tspan><tspan dy="4" font-size="9.5">b,max</tspan></text>
+    <text x="20" y="596" fill="#555555">The gas phase is mole-neutral: one mole of CO<tspan dy="3" font-size="9.5">2</tspan><tspan dy="-3" font-size="12.5"> consumed per mole of vapour released, so it loses volume only to solid expansion.</tspan></text>
+  </g>
+</svg>
