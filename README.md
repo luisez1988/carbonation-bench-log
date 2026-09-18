@@ -2,7 +2,7 @@
 
 A browser tool for running and reducing carbonation experiments on lime-treated soil, together with the phase-diagram derivation it implements.
 
-**Live page:** https://USERNAME.github.io/carbonation-bench-log/ *(fill in once Pages is enabled)*
+**Live page:** https://luisez1988.github.io/carbonation-bench-log/ *(fill in once Pages is enabled)*
 
 Nothing is uploaded anywhere. The page runs entirely in your browser and keeps records in that browser's local storage.
 
